@@ -149,14 +149,11 @@ class UukanshuNovelTrawler(NovelTrawler):
             elif chapter_subpath.split(".")[0].split("/")[-1] == "12472439":
                 chapter_num = "5365"
                 print(chapter_num, title)
-            elif chapter_subpath.split(".")[0].split("/")[-1] ==  "12491082":
+            elif chapter_subpath.split(".")[0].split("/")[-1] == "12491082":
                 chapter_num = "5403"
                 print(chapter_num, title)
             elif chapter_subpath.split(".")[0].split("/")[-1] == "12549943":
                 chapter_num = "5461"
                 print(chapter_num, title)
-
-
-                
 
         return chapter_num

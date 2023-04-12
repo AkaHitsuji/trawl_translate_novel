@@ -1,5 +1,3 @@
-
-
 from abc import ABC, abstractmethod
 import os
 from typing import Dict, Tuple
@@ -19,13 +17,18 @@ class NovelTrawler(ABC):
     def get_chapter(self, book_id: str, chapter_num: str) -> Tuple[str, str]:
         """
         Gets chapter content
-        
+
         Returns Tuple[chapter title, chapter content]
         """
         pass
 
     @abstractmethod
-    def get_book(self, book_id: str, starting_chapter_num: str = None, ending_chapter_num: str = None) -> Dict[str, str]:
+    def get_book(
+        self,
+        book_id: str,
+        starting_chapter_num: str = None,
+        ending_chapter_num: str = None,
+    ) -> Dict[str, str]:
         """
         Gets book within range, defaults to getting full book if starting and ending chapter ids are not provided.
 
@@ -33,15 +36,16 @@ class NovelTrawler(ABC):
         """
         pass
 
-class TextWriter():
+
+class TextWriter:
     def __init__(self, parent_dir: str) -> None:
         self.parent_dir = parent_dir
 
-    def write_to_file(self, book_title: str,chapter_title: str, content: str):
+    def write_to_file(self, book_title: str, chapter_title: str, content: str):
         filepath = f"{self.parent_dir}/{book_title}/{chapter_title}.txt"
         # to make sure file path exists before writing
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
-        with open(filepath, 'w') as file:
+        with open(filepath, "w") as file:
             file.write(content)
             file.close()
