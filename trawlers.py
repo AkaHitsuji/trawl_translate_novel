@@ -1,11 +1,11 @@
 from typing import Dict, Tuple
 import requests
-from base import NovelTrawler
+from base import BaseNovelTrawler
 from bs4 import BeautifulSoup
 from pycnnum import cn2num
 
 
-class UukanshuNovelTrawler(NovelTrawler):
+class UukanshuNovelTrawler(BaseNovelTrawler):
     NOVEL_URL = "https://uukanshu.cc"
 
     def __init__(self) -> None:
@@ -27,7 +27,6 @@ class UukanshuNovelTrawler(NovelTrawler):
             title = chinese_info[1] if len(chinese_info) == 2 else ""
             chapter_num = self._get_english_chapter_number(chinese_number)
 
-            # fix for nshba chapter discrepancies
             chapter_num = self._fix_chapter_title_discrepancies(
                 book_id=book_id,
                 chapter_num=chapter_num,
