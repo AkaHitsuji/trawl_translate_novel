@@ -1,3 +1,5 @@
+# code referred from: https://github.com/ugorsahin/ChatGPT_Selenium
+
 """Class definition for ChatGPT Handler"""
 
 import time
