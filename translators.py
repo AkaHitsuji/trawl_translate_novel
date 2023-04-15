@@ -1,26 +1,32 @@
-import subprocess
-import openai
+from typing import Tuple
 
 from base import BaseTranslator
 from chatgpt_selenium import Handler
 
 
 class ChatGPTTranslator(BaseTranslator):
-    def __init__(self, username: str, password: str):
+    def __init__(self, username: str, password: str, chat_prompt: str):
         self.openai_handler = Handler(username, password)
         # give prompt to start openai handler
-        answer = self.openai_handler.interact(
-            "I will be providing you with chinese webnovel chapters, you will respond with the english translation of the chinese webnovel chapter. Give me your best translation while retaining the tone and writing style of this chinese martial novel. Are you ready?"
-        )
+        answer = self.openai_handler.interact(chat_prompt)
         print(answer)
         print("--chatbot initialised--")
 
-    def translate_chapter(self, chinese_content) -> str:
-        prompt = (
-            f"translate novel from chinese to english: \n```\n{chinese_content}\n```"
-        )
+    def translate_chapter(self, chinese_title, chinese_content) -> Tuple[str, str]:
+        """
+        Returns translated (title, content)
+        """
         # subprocess.run("pbcopy", text=True, input=prompt)
 
-        english_translation = self.openai_handler.interact(f"{prompt}")
+        english_title = self.openai_handler.interact(
+            self._get_translate_prompt(chinese_title)
+        )
+        english_content = self.openai_handler.interact(
+            self._get_translate_prompt(chinese_content)
+        )
 
-        return english_translation
+        return english_title.strip(), english_content
+
+    def _get_translate_prompt(self, text: str) -> str:
+        return f"translate from chinese to english. Only return the text within the dashes:\n---\n{text}\n---"
+        # return text
