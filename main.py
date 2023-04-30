@@ -1,13 +1,12 @@
 from commandr import Run, command
 
-import hidden_file
 from base import TextReaderWriter
 from translators import ChatGPTTranslator, NovelHiTranslator
 from trawlers import UukanshuNovelTrawler
 
-OPENAI_KEY = hidden_file.OPENAI_KEY
-OPENAI_USERNAME = hidden_file.OPENAI_USERNAME
-OPENAI_PASSWORD = hidden_file.OPENAI_PASSWORD
+# OPENAI_KEY = hidden_file.OPENAI_KEY
+# OPENAI_USERNAME = hidden_file.OPENAI_USERNAME
+# OPENAI_PASSWORD = hidden_file.OPENAI_PASSWORD
 BOOK_ID = 11992  # nine star hegemon book key
 STARTING_CHAPTER_ID = 7392047
 
