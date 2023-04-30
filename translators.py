@@ -2,6 +2,7 @@ from typing import Tuple
 
 from base import BaseTranslator
 from chatgpt_selenium import Handler
+from novelhi_selenium import NovelHiHandler
 
 
 class ChatGPTTranslator(BaseTranslator):
@@ -12,7 +13,7 @@ class ChatGPTTranslator(BaseTranslator):
         print(answer)
         print("--chatbot initialised--")
 
-    def translate_chapter(self, chinese_title, chinese_content) -> Tuple[str, str]:
+    def translate_text(self, chinese_title, chinese_content) -> Tuple[str, str]:
         """
         Returns translated (title, content)
         """
@@ -30,3 +31,12 @@ class ChatGPTTranslator(BaseTranslator):
     def _get_translate_prompt(self, text: str) -> str:
         return f"translate from chinese to english. Only return the text within the dashes:\n---\n{text}\n---"
         # return text
+
+
+class NovelHiTranslator(BaseTranslator):
+    def __init__(self) -> None:
+        self.novelhi_handler = NovelHiHandler()
+
+    def translate_text(self, chinese_text) -> str:
+        english_text = self.novelhi_handler.translate_text(chinese_text)
+        return english_text

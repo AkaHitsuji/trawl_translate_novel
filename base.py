@@ -101,7 +101,7 @@ class TextReaderWriter:
 
 class BaseTranslator(ABC):
     @abstractmethod
-    def translate_chapter(self, content) -> str:
+    def translate_text(self, content) -> str:
         """
         Translates content from chinese to english
         """

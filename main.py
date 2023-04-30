@@ -2,7 +2,7 @@ from commandr import Run, command
 
 import hidden_file
 from base import TextReaderWriter
-from translators import ChatGPTTranslator
+from translators import ChatGPTTranslator, NovelHiTranslator
 from trawlers import UukanshuNovelTrawler
 
 OPENAI_KEY = hidden_file.OPENAI_KEY
@@ -92,46 +92,39 @@ def translate_chapter(chapter_num):
         book_title=BOOK_TITLE, chapter_num=chapter_num, is_downloaded=True
     )
     print(f"retrieved chinese content {len(chinese_content)}")
-
-    chatgpt_translator = ChatGPTTranslator(
-        username=OPENAI_USERNAME,
-        password=OPENAI_PASSWORD,
-        chat_prompt="translate NSHBA chapter",
-    )
-    english_title, english_content = chatgpt_translator.translate_chapter(
-        chinese_title=chinese_title, chinese_content=chinese_content
-    )
+    novelhi_translator = NovelHiTranslator()
+    english_title = novelhi_translator.translate_text(chinese_title).strip()
+    english_content = novelhi_translator.translate_text(chinese_content)
     print("translated to english, saving to file")
     text_rw.write_to_file(
         book_title=BOOK_TITLE,
-        chapter_title=english_title,
+        chapter_title=f"{chapter_num}_{english_title}",
         content=english_content,
         is_downloaded=False,
     )
     print("translation complete")
 
+
 @command
-def translate_chapters(chat_prompt, starting_chapter_num=None, ending_chapter_num=None):
+def translate_chapters(starting_chapter_num=None, ending_chapter_num=None):
     if starting_chapter_num is None or ending_chapter_num is None:
         raise ValueError("starting or ending chapter number needs to be provided")
-    
+
     text_rw = TextReaderWriter()
-    chatgpt_translator = ChatGPTTranslator(
-        username=OPENAI_USERNAME,
-        password=OPENAI_PASSWORD,
-        chat_prompt=chat_prompt,
-    )
-    for chapter_num in range(int(starting_chapter_num), int(ending_chapter_num)+1):
+    novelhi_translator = NovelHiTranslator()
+    for chapter_num in range(int(starting_chapter_num), int(ending_chapter_num) + 1):
         print(f"processing chapter: {chapter_num}..")
-        chinese_title, chinese_content= text_rw.get_file_content(
+        chinese_title, chinese_content = text_rw.get_file_content(
             book_title=BOOK_TITLE, chapter_num=str(chapter_num), is_downloaded=True
         )
         print(f"retrieved chinese content {len(chinese_content)}")
 
-        english_title, english_content = chatgpt_translator.translate_chapter(
-            chinese_title=chinese_title, chinese_content=chinese_content
-        )
+        english_title = novelhi_translator.translate_text(chinese_title)
+        english_title = f"{chapter_num}_{english_title}"
+        english_content = novelhi_translator.translate_text(chinese_content)
+
         print("translated to english, saving to file")
+        print(f"english title: {english_title}")
         text_rw.write_to_file(
             book_title=BOOK_TITLE,
             chapter_title=english_title,
