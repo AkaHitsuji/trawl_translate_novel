@@ -23,10 +23,14 @@ class NovelHiHandler:
         options.add_argument("--incognito")
         if headless:
             options.add_argument("--headless")
+            # PROXY = "37.187.88.32:8001"
+            # options.add_argument(f'--proxy-server={PROXY}')
         self.browser = uc.Chrome(options=options)
-        self.browser.set_page_load_timeout(5)
+        self.browser.set_page_load_timeout(15)
 
         self.browser.get(self.NOVELHI_WEBSITE)
+        print(self.browser.find_element(By.TAG_NAME, 'body').text)
+        self._get_translate_token()
 
     def _get_translate_token(self) -> str:
         if self.translate_token is None:
