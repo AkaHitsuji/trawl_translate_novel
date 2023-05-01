@@ -55,7 +55,7 @@ class NovelHiHandler:
         # while '\n\n' in translated_text:
         #     translated_text = translated_text.replace('\n\n', '')
         # translated_text = BeautifulSoup(html_text).get_text()
-        print(translated_text)
+        # print(translated_text)
 
         return translated_text
 

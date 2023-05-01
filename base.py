@@ -62,6 +62,15 @@ class TextReaderWriter:
             file.write(content)
             file.close()
 
+    def get_book_titles(
+        self,
+        book_title: str,
+    ) -> List[str]:
+        parent_dir = self.downloaded_dir
+        folderpath = f"{parent_dir}/{book_title}"
+        chapter_titles = os.listdir(folderpath)
+        return chapter_titles
+
     def get_file_content(
         self,
         book_title: str,

@@ -1,8 +1,8 @@
 from typing import Tuple
 
 from base import BaseTranslator
-from chatgpt_selenium import Handler
-from novelhi_selenium import NovelHiHandler
+from browsers.chatgpt_selenium import Handler
+from browsers.novelhi_selenium import NovelHiHandler
 
 
 class ChatGPTTranslator(BaseTranslator):
