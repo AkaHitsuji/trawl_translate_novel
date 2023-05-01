@@ -118,8 +118,9 @@ def translate_chapters(starting_chapter_num=None, ending_chapter_num=None):
         )
         print(f"retrieved chinese content {len(chinese_content)}")
 
-        english_title = novelhi_translator.translate_text(chinese_title)
-        english_title = f"{chapter_num}_{english_title}"
+        # english_title = novelhi_translator.translate_text(chinese_title)
+        # english_title = f"{chapter_num}_{english_title}"
+        english_title = f"{chapter_num}_"
         english_content = novelhi_translator.translate_text(chinese_content)
 
         print("translated to english, saving to file")
