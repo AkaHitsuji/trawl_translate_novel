@@ -128,6 +128,7 @@ def translate_chapters(starting_chapter_num=None, ending_chapter_num=None):
 
         translated_contents: List[str] = []
         for content in contents:
+            print(f"translating content {len(content)}")
             translated_contents.append(novelhi_translator.translate_text(content))
         english_content = _combine_content(translated_contents)
 
@@ -187,19 +188,27 @@ def transform_translated_titles():
     
 
 def _split_content(content: str) -> List[str]:
+    thirds = len(content) // 3
     index = len(content)//2
 
-    for i in range(index, len(content)):
+    first_third = thirds
+    for i in range(first_third, len(content)):
         if content[i] == '\n':
-            divide_point = i
+            first_divide_point = i
             break
     
-    if not divide_point:
+    for i in range(first_divide_point + thirds, len(content)):
+        if content[i] == '\n':
+            second_divide_point = i
+            break
+    
+    if not first_divide_point or not second_divide_point:
         raise ValueError("Unable to find split point as no new character")
     
-    first_half = content[:divide_point+1]
-    second_half = content[divide_point:]
-    return [first_half, second_half]
+    first_third = content[:first_divide_point+1]
+    second_third = content[first_divide_point:second_divide_point+1]
+    last_third = content[second_divide_point:]
+    return [first_third, second_third, last_third]
 
 def _combine_content(contents: List[str]) -> str:
     combined = ""
