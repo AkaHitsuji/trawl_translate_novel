@@ -1,3 +1,4 @@
+import re
 from typing import Dict, Tuple
 import requests
 from base import BaseNovelTrawler
@@ -156,3 +157,116 @@ class UukanshuNovelTrawler(BaseNovelTrawler):
                 print(chapter_num, title)
 
         return chapter_num
+
+class NovelFullTrawler(BaseNovelTrawler):
+    NOVEL_URL = "https://novelfull.com"
+
+    def __init__(self) -> None:
+        self.chapter_titles = None
+
+    def get_chapter_titles(self, book_id: str) -> Dict[str, str]:
+        if self.chapter_titles:
+            return self.chapter_titles
+        
+        chapter_list_url = f"{self.NOVEL_URL}/{book_id}.html"
+
+        html = self._get_content(chapter_list_url)
+        full_chapter_list = []
+        should_go_next = True
+        
+        next_page_url = f"/{book_id}.html"
+        while should_go_next:
+            html = self._get_content(f"{self.NOVEL_URL}{next_page_url}")
+            chapters = self.get_partial_chapters(html)
+            full_chapter_list =full_chapter_list + chapters
+            next_page_url = self.get_next_page_url(html)
+            print(f"next page found, url: {next_page_url}, chapters found: {len(full_chapter_list)}")
+            if next_page_url is None:
+                should_go_next = False   
+        
+        self.chapter_titles = {
+            str(index + 1): {
+                'subpath': item['url'],
+                'title': item['title'],
+                'chapter_number': str(index + 1)
+            }
+            for index, item in enumerate(full_chapter_list)
+        }
+        return self.chapter_titles
+        
+    def get_partial_chapters(self, html_content) -> Dict[str, str]:
+        soup = BeautifulSoup(html_content, 'html.parser')
+        
+        # Find all <a> tags within <ul class="list-chapter">
+        chapter_links = soup.select('ul.list-chapter a[href]')
+        chapters = []
+    
+        for link in chapter_links:
+            href = link['href']
+            title = link.get('title', '')
+            
+            # Clean the chapter title to remove Unicode characters
+            cleaned_title = re.sub(r'[^\x00-\x7F]+', '', title).strip()
+            
+            chapters.append({
+                'url': href,
+                'title': cleaned_title
+            })
+        
+        return chapters
+        
+    def get_next_page_url(self, html_content) -> str:
+        soup = BeautifulSoup(html_content, 'html.parser')
+        
+        # Find the <li> tag with class 'next'
+        next_page_li = soup.find('li', class_='next')
+        
+        if next_page_li:
+            # Find the <a> tag inside this <li>
+            next_page_a = next_page_li.find('a', href=True)
+            
+            if next_page_a:
+                # Extract the href attribute
+                next_page_url = next_page_a['href']
+                return next_page_url
+        return None
+
+
+
+    def get_book(self, book_id: str, starting_chapter_num: str = None, ending_chapter_num: str = None) -> Dict[str, str]:
+        return super().get_book(book_id, starting_chapter_num, ending_chapter_num)
+    
+    # TODO: fix retrieval of chapters with slashes in their titles
+    def get_chapter(self, book_id: str, chapter_num: str) -> Tuple[str, str]:
+        chapter_titles = self.get_chapter_titles(book_id)
+        chapter_subpath = chapter_titles[chapter_num]["subpath"]
+        chapter_title = chapter_titles[chapter_num]["title"]
+
+        content_url = f"{self.NOVEL_URL}{chapter_subpath}"
+
+        html = self._get_content(content_url)
+        soup = BeautifulSoup(html, "html.parser")
+        chapter_content = soup.find("div", {"id": "chapter-content"})
+        content = self._get_text_with_line_breaks(chapter_content)
+
+        return chapter_title, content
+
+    def _get_text_with_line_breaks(self, soup) -> str:
+         # Find all block-level elements (e.g., <p>, <div>, <h1>, etc.)
+        block_elements = soup.find_all(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li'])
+        
+        text_output = []
+        
+        for element in block_elements:
+            text = element.get_text(separator='\n', strip=True)
+            text_output.append(text)
+        
+        # Join the block texts with two new lines to preserve paragraph separation
+        return '\n\n'.join(text_output)
+
+    def _get_text_without_line_breaks(self, soup) -> str:
+        return soup.get_text().strip()
+                                                         
+    def _get_content(self, url: str):
+        response = requests.get(url)
+        return response.content

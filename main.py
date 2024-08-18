@@ -4,7 +4,7 @@ from commandr import Run, command
 
 from base import TextReaderWriter
 from translators import ChatGPTTranslator, NovelHiTranslator
-from trawlers import UukanshuNovelTrawler
+from trawlers import NovelFullTrawler, UukanshuNovelTrawler
 
 # OPENAI_KEY = hidden_file.OPENAI_KEY
 # OPENAI_USERNAME = hidden_file.OPENAI_USERNAME
@@ -29,6 +29,7 @@ def get_chapter(book_id, chapter_num):
     )
     print(content)
     print(title)
+
 
 
 @command
@@ -63,6 +64,42 @@ def get_and_save_book(book_id, starting_chapter_num=None, ending_chapter_num=Non
 
         text_writer.write_to_file(
             book_title=BOOK_TITLE, chapter_title=title, content=content
+        )
+        print(f"saved {title}")
+
+@command
+def get_and_save_book_novelfull(book_id, starting_chapter_num=None, ending_chapter_num=None):
+    print(starting_chapter_num, ending_chapter_num)
+    novelfull_trawler = NovelFullTrawler()
+    
+    text_writer = TextReaderWriter()
+
+    chapter_titles = novelfull_trawler.get_chapter_titles(book_id)
+    if (
+        starting_chapter_num is not None
+        and chapter_titles.get(starting_chapter_num) is None
+    ):
+        raise ValueError("bad starting chapter number provided")
+    if (
+        ending_chapter_num is not None
+        and chapter_titles.get(ending_chapter_num) is None
+    ):
+        raise ValueError("bad ending chapter number provided")
+
+    start = int(starting_chapter_num) if starting_chapter_num else 1
+    end = (
+        int(ending_chapter_num) if ending_chapter_num else int(list(chapter_titles)[-1])
+    )
+
+    for chapter_num in range(start, end + 1):
+        print(f"retrieving content for chapter {chapter_num}..")
+        title, content = novelfull_trawler.get_chapter(
+            book_id=book_id, chapter_num=str(chapter_num)
+        )
+        print(f"retrieved content for title: {title}")
+
+        text_writer.write_to_file(
+            book_title=book_id, chapter_title=title, content=content
         )
         print(f"saved {title}")
 
