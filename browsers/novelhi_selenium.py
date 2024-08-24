@@ -29,7 +29,7 @@ class NovelHiHandler:
         self.browser.set_page_load_timeout(15)
 
         self.browser.get(self.NOVELHI_WEBSITE)
-        print(self.browser.find_element(By.TAG_NAME, 'body').text)
+        print(self.browser.find_element(By.TAG_NAME, "body").text)
         self._get_translate_token()
 
     def _get_translate_token(self) -> str:

@@ -2,8 +2,10 @@ import os
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Tuple
 
+
 class BaseExporter(ABC):
     pass
+
 
 class BaseNovelTrawler(ABC):
     NOVEL_URL: str

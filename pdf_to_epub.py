@@ -1,7 +1,7 @@
 # importing required modules
 from PyPDF2 import PdfReader
 from ebooklib import epub
-  
+
 
 BOOK_TITLE = "Overgeared_Novel"
 TEXT_FILE = f"{BOOK_TITLE}.txt"

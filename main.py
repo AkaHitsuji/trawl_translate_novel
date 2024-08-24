@@ -31,7 +31,6 @@ def get_chapter(book_id, chapter_num):
     print(title)
 
 
-
 @command
 def get_and_save_book(book_id, starting_chapter_num=None, ending_chapter_num=None):
     print(starting_chapter_num, ending_chapter_num)
@@ -67,11 +66,14 @@ def get_and_save_book(book_id, starting_chapter_num=None, ending_chapter_num=Non
         )
         print(f"saved {title}")
 
+
 @command
-def get_and_save_book_novelfull(book_id, starting_chapter_num=None, ending_chapter_num=None):
+def get_and_save_book_novelfull(
+    book_id, starting_chapter_num=None, ending_chapter_num=None
+):
     print(starting_chapter_num, ending_chapter_num)
     novelfull_trawler = NovelFullTrawler()
-    
+
     text_writer = TextReaderWriter()
 
     chapter_titles = novelfull_trawler.get_chapter_titles(book_id)
@@ -159,7 +161,7 @@ def translate_chapters(starting_chapter_num=None, ending_chapter_num=None):
 
         # to handle translator not being able to take that much text
         contents = _split_content(chinese_content)
-    
+
         english_title = _get_translated_title(chapter_num)
         print(f"retrieved english title: {english_title}, now translating")
 
@@ -190,19 +192,21 @@ def test_split(chapter_num):
     split_contents = _split_content(chinese_content)
     combined_content = _combine_content(split_contents)
 
+
 @command
 def get_titles():
     text_rw = TextReaderWriter()
     titles = text_rw.get_book_titles(BOOK_TITLE)
     titles_text = "\n".join(titles)
-    
+
     subprocess.run("pbcopy", text=True, input=titles_text)
     print(f"retrieved all {len(titles)} titles")
+
 
 @command
 def transform_translated_titles():
     translated_titles = {}
-    filepath ="nshba_translated_titles.txt" 
+    filepath = "nshba_translated_titles.txt"
     with open(filepath, "r") as file:
         lines = file.readlines()
         for line in lines:
@@ -216,58 +220,60 @@ def transform_translated_titles():
 
     titles = ""
     for i in sorted(translated_titles.keys()):
-        titles += (f"{translated_titles[i]}\n")
+        titles += f"{translated_titles[i]}\n"
     with open(filepath, "w") as file:
         file.write(titles)
         file.close()
     # print(translated_titles)
 
-    
 
 def _split_content(content: str) -> List[str]:
     thirds = len(content) // 3
-    index = len(content)//2
+    index = len(content) // 2
 
     first_third = thirds
     for i in range(first_third, len(content)):
-        if content[i] == '\n':
+        if content[i] == "\n":
             first_divide_point = i
             break
-    
+
     for i in range(first_divide_point + thirds, len(content)):
-        if content[i] == '\n':
+        if content[i] == "\n":
             second_divide_point = i
             break
-    
+
     if not first_divide_point or not second_divide_point:
         raise ValueError("Unable to find split point as no new character")
-    
-    first_third = content[:first_divide_point+1]
-    second_third = content[first_divide_point:second_divide_point+1]
+
+    first_third = content[: first_divide_point + 1]
+    second_third = content[first_divide_point : second_divide_point + 1]
     last_third = content[second_divide_point:]
     return [first_third, second_third, last_third]
+
 
 def _combine_content(contents: List[str]) -> str:
     combined = ""
     for content in contents:
         combined += content
-    
+
     return combined
+
 
 def _get_translated_title(chapter_num):
     translated_titles = {}
-    filepath ="nshba_translated_titles.txt" 
+    filepath = "nshba_translated_titles.txt"
     with open(filepath, "r") as file:
         lines = file.readlines()
         for line in lines:
             details = line.split("_")
             translated_titles[details[0]] = line.strip()
         file.close()
-    
+
     title = translated_titles.get(str(chapter_num))
     if title is None:
         raise ValueError(f"unable to find {chapter_num} in translated titles")
     return title
+
 
 if __name__ == "__main__":
     Run()
