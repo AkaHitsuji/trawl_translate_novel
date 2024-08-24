@@ -164,6 +164,10 @@ class NovelFullTrawler(BaseNovelTrawler):
 
     def __init__(self) -> None:
         self.chapter_titles = None
+        # self.chapter_titles = {
+        #     '41': {'subpath': '/reverend-insanity/chapter-41.html', 'title': 'Chapter 41', 'chapter_number': '41'}
+        # }
+        # nsanity/chapter-2330-almost-suffering-amnesia-from-the-explosion.html', 'title': 'Chapter 2330 -  Almost Suffering Amnesia From The Explosion', 'chapter_number': '2330'}, '2331': {'subpath': '/reverend-insanity/chapter-2331-pitiful-survivors.html', 'title': 'Chapter 2331 - : Pitiful Survivors', 'chapter_number': '2331'}, '2332': {'subpath': '/reverend-insanity/chapter-2332-heavenly-courts-resolve.html', 'title': 'Chapter 2332 - Heavenly Courts Resolve', 'chapter_number': '2332'}, '2333': {'subpath': '/reverend-insanity/chapter-2333-three-venerables-attack-heavenly-court.html', 'title': 'Chapter 2333 - Three Venerables Attack Heavenly Court!', 'chapter_number': '2333'}, '2334': {'subpath': '/reverend-insanity/chapter-2334-fang-yuan-and-giant-sun-fight-star-constellation.html', 'title': 'Chapter 2334 - Fang Yuan and Giant Sun Fight Star Constellation', 'chapter_number': '2334'}}
 
     def get_chapter_titles(self, book_id: str) -> Dict[str, str]:
         if self.chapter_titles:
@@ -239,7 +243,6 @@ class NovelFullTrawler(BaseNovelTrawler):
     ) -> Dict[str, str]:
         return super().get_book(book_id, starting_chapter_num, ending_chapter_num)
 
-    # TODO: fix retrieval of chapters with slashes in their titles
     def get_chapter(self, book_id: str, chapter_num: str) -> Tuple[str, str]:
         chapter_titles = self.get_chapter_titles(book_id)
         chapter_subpath = chapter_titles[chapter_num]["subpath"]
@@ -249,16 +252,17 @@ class NovelFullTrawler(BaseNovelTrawler):
 
         html = self._get_content(content_url)
         soup = BeautifulSoup(html, "html.parser")
-        chapter_content = soup.find("div", {"id": "chapter-content"})
-        content = self._get_text_with_line_breaks(chapter_content)
 
-        return chapter_title, content
+        content_div = soup.find("div", {"class": "chapter container"})
+
+        chapter_content = self._get_text_with_line_breaks(content_div)
+        chapter_content = chapter_content.strip()
+
+        return chapter_title, chapter_content
 
     def _get_text_with_line_breaks(self, soup) -> str:
-        # Find all block-level elements (e.g., <p>, <div>, <h1>, etc.)
-        block_elements = soup.find_all(
-            ["p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li"]
-        )
+        # Find all block-level elements
+        block_elements = soup.find_all(["p", "h3"])
 
         text_output = []
 

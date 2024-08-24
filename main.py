@@ -77,6 +77,7 @@ def get_and_save_book_novelfull(
     text_writer = TextReaderWriter()
 
     chapter_titles = novelfull_trawler.get_chapter_titles(book_id)
+    # breakpoint()
     if (
         starting_chapter_num is not None
         and chapter_titles.get(starting_chapter_num) is None
@@ -103,7 +104,6 @@ def get_and_save_book_novelfull(
         text_writer.write_to_file(
             book_title=book_id, chapter_title=title, content=content
         )
-        print(f"saved {title}")
 
 
 @command

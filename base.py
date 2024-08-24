@@ -57,7 +57,8 @@ class TextReaderWriter:
         is_downloaded: bool. Determines if should write to downloaded dir or translated dir
         """
         parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
-
+        chapter_title = self._format_chapter_special_char(chapter_title)
+        # breakpoint()
         filepath = f"{parent_dir}/{book_title}/{chapter_title}.txt"
         # to make sure file path exists before writing
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -65,6 +66,7 @@ class TextReaderWriter:
         with open(filepath, "w") as file:
             file.write(content)
             file.close()
+        print(f"saved {chapter_title}")
 
     def get_book_titles(
         self,
@@ -110,6 +112,9 @@ class TextReaderWriter:
             if num == chapter_num:
                 return title
         return None
+
+    def _format_chapter_special_char(self, chapter_title: str) -> str:
+        return chapter_title.replace("/", "-")
 
 
 class BaseTranslator(ABC):
