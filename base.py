@@ -1,6 +1,7 @@
 import json
 import os
 from abc import ABC, abstractmethod
+import re
 from typing import Dict, List, Optional, Tuple
 
 
@@ -43,9 +44,13 @@ class BaseNovelTrawler(ABC):
 
 
 class TextReaderWriter:
-    def __init__(self):
+    COVER_IMAGE_FILENAME = "cover_image.jpg"
+    BOOK_INFO_FILENAME = "book_info.json"
+
+    def __init__(self, book_title):
         self.downloaded_dir = "downloaded_books"
         self.translated_dir = "translated_books"
+        self.book_title = book_title
 
     def write_chapter_to_file(
         self,
@@ -79,7 +84,7 @@ class TextReaderWriter:
         is_downloaded: bool. Determines if should write to downloaded dir or translated dir
         """
         parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
-        filepath = f"{parent_dir}/{book_title}/cover_image.jpg"
+        filepath = f"{parent_dir}/{book_title}/{self.COVER_IMAGE_FILENAME}"
         # to make sure file path exists before writing
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
@@ -98,7 +103,7 @@ class TextReaderWriter:
         is_downloaded: bool. Determines if should write to downloaded dir or translated dir
         """
         parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
-        filepath = f"{parent_dir}/{book_title}/book_info.json"
+        filepath = f"{parent_dir}/{book_title}/{self.BOOK_INFO_FILENAME}"
         # to make sure file path exists before writing
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
@@ -108,14 +113,49 @@ class TextReaderWriter:
 
         print(f"saved book info")
 
-    def get_book_titles(
-        self,
-        book_title: str,
-    ) -> List[str]:
+    def get_book_titles(self, order_key: Optional[str]) -> List[str]:
         parent_dir = self.downloaded_dir
-        folderpath = f"{parent_dir}/{book_title}"
+        folderpath = f"{parent_dir}/{self.book_title}"
         chapter_titles = os.listdir(folderpath)
+
+        # remove non chapter files
+        chapter_titles = [
+            f
+            for f in chapter_titles
+            if f not in [self.COVER_IMAGE_FILENAME, self.BOOK_INFO_FILENAME]
+        ]
+
+        # order titles
+        # Chapter (\d+)
+        if order_key:
+
+            def extract_chapter_number(title):
+                match = re.search(rf"{order_key}", title)
+                return int(match.group(1)) if match else 0
+
+            chapter_titles = sorted(chapter_titles, key=extract_chapter_number)
+
         return chapter_titles
+
+    def get_chapter_content(
+        self,
+        chapter_path: str,
+        is_downloaded: bool = True,
+    ):
+        """
+        Returns (title, content)
+        """
+        parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
+
+        folderpath = f"{parent_dir}/{self.book_title}"
+
+        filepath = f"{folderpath}/{chapter_path}"
+        with open(filepath) as f:
+            content = f.read()
+            f.close()
+
+        chapter_title = chapter_path.split(".")[0]
+        return chapter_title, content
 
     def get_file_content(
         self,

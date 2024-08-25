@@ -21,6 +21,23 @@ class NovelTranslater:
         self.translater_api_key = translater_api_key
 
 
+# TODO: change to click
+@command
+def export_epub(book_id):
+    # hardcode order key first, expose as param next time
+    order_key = "Chapter (\d+)"
+
+    text_reader = TextReaderWriter(book_id)
+    chapter_paths = text_reader.get_book_titles(order_key=order_key)
+    chapter_paths = [chapter_paths[0]]
+
+    content_chapters = {}
+    for path in chapter_paths:
+        title, content = text_reader.get_chapter_content(path)
+        content_chapters[title] = content
+    breakpoint()
+
+
 @command
 def get_chapter(book_id, chapter_num):
     uukanshu_trawler = UukanshuNovelTrawler()
@@ -206,8 +223,8 @@ def test_split(chapter_num):
 
 @command
 def get_titles():
-    text_rw = TextReaderWriter()
-    titles = text_rw.get_book_titles(BOOK_TITLE)
+    text_rw = TextReaderWriter(BOOK_TITLE)
+    titles = text_rw.get_book_titles()
     titles_text = "\n".join(titles)
 
     subprocess.run("pbcopy", text=True, input=titles_text)
