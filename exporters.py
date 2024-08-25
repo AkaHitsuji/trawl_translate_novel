@@ -1,8 +1,6 @@
-import copy
 from typing import Dict
 from ebooklib import epub
 from base import BaseExporter
-import os
 
 
 class EpubExporter(BaseExporter):
@@ -10,15 +8,19 @@ class EpubExporter(BaseExporter):
         self.book_id = book_id
         self.book_title = self._format_title()
 
-    # TODO: complete implementation of this method
     def export_epub(self, cover_page: bytes, book_info: Dict, book_content: Dict):
         # Create a new EPUB book
         book = epub.EpubBook()
 
         # Set metadata
-        book.set_title(self.book_id)
+        book.set_title(self.book_title)
         book.set_language("en")
         book.add_author(book_info.get("Author"))
+        book.add_metadata("DC", "publisher", book_info.get("Source"))
+        book.add_metadata("DC", "subject", book_info.get("Genre"))
+        book.add_metadata(
+            "DC", "contributor", f"{book_info.get('Author')}+', '+'Akahitsuji'"
+        )
 
         # cover page
         cover_image = epub.EpubItem(
@@ -66,17 +68,11 @@ class EpubExporter(BaseExporter):
         ]
 
         # Add a Table of Contents (TOC)
-        book.toc = (
-            epub.Link("intro.xhtml", "Introduction", "intro"),
-            (
-                epub.Section("Chapters"),
-                [
-                    epub.Link(chapter.file_name, chapter.title, chapter.file_name)
-                    for chapter in book.items
-                    if isinstance(chapter, epub.EpubHtml) and chapter != chapter_intro
-                ],
-            ),
-        )
+        book.toc = [epub.Link("intro.xhtml", "Introduction", "intro")] + [
+            epub.Link(chapter.file_name, chapter.title, chapter.file_name)
+            for chapter in book.items
+            if isinstance(chapter, epub.EpubHtml) and chapter != chapter_intro
+        ]
 
         # Add navigation file
         nav = epub.EpubNav()
