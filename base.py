@@ -46,7 +46,7 @@ class TextReaderWriter:
         self.downloaded_dir = "downloaded_books"
         self.translated_dir = "translated_books"
 
-    def write_to_file(
+    def write_chapter_to_file(
         self,
         book_title: str,
         chapter_title: str,
@@ -67,6 +67,25 @@ class TextReaderWriter:
             file.write(content)
             file.close()
         print(f"saved {chapter_title}")
+
+    def save_book_cover(
+        self,
+        book_title: str,
+        image_bytes: bytes,
+        is_downloaded: bool = True,
+    ):
+        """
+        is_downloaded: bool. Determines if should write to downloaded dir or translated dir
+        """
+        parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
+        filepath = f"{parent_dir}/{book_title}/cover_image.jpg"
+        # to make sure file path exists before writing
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+        with open(filepath, "wb") as file:
+            file.write(image_bytes)
+            file.close()
+        print(f"saved cover image")
 
     def get_book_titles(
         self,

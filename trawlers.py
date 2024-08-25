@@ -1,5 +1,6 @@
+import os
 import re
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 import requests
 from base import BaseNovelTrawler
 from bs4 import BeautifulSoup
@@ -164,10 +165,23 @@ class NovelFullTrawler(BaseNovelTrawler):
 
     def __init__(self) -> None:
         self.chapter_titles = None
-        # self.chapter_titles = {
-        #     '41': {'subpath': '/reverend-insanity/chapter-41.html', 'title': 'Chapter 41', 'chapter_number': '41'}
-        # }
-        # nsanity/chapter-2330-almost-suffering-amnesia-from-the-explosion.html', 'title': 'Chapter 2330 -  Almost Suffering Amnesia From The Explosion', 'chapter_number': '2330'}, '2331': {'subpath': '/reverend-insanity/chapter-2331-pitiful-survivors.html', 'title': 'Chapter 2331 - : Pitiful Survivors', 'chapter_number': '2331'}, '2332': {'subpath': '/reverend-insanity/chapter-2332-heavenly-courts-resolve.html', 'title': 'Chapter 2332 - Heavenly Courts Resolve', 'chapter_number': '2332'}, '2333': {'subpath': '/reverend-insanity/chapter-2333-three-venerables-attack-heavenly-court.html', 'title': 'Chapter 2333 - Three Venerables Attack Heavenly Court!', 'chapter_number': '2333'}, '2334': {'subpath': '/reverend-insanity/chapter-2334-fang-yuan-and-giant-sun-fight-star-constellation.html', 'title': 'Chapter 2334 - Fang Yuan and Giant Sun Fight Star Constellation', 'chapter_number': '2334'}}
+
+    def get_book_cover(self, book_id: str) -> Optional[bytes]:
+        homepage = f"{self.NOVEL_URL}/{book_id}.html"
+
+        html = self._get_content(homepage)
+        soup = BeautifulSoup(html, "html.parser")
+        img_tag = soup.find("div", class_="book").find("img")
+
+        img_url = img_tag["src"]
+        full_img_url = os.path.join(self.NOVEL_URL, img_url.lstrip("/"))
+
+        response = requests.get(full_img_url)
+        if response.status_code != 200:
+            # raise ValueError("Unable to download cover image")
+            return None
+
+        return response.content
 
     def get_chapter_titles(self, book_id: str) -> Dict[str, str]:
         if self.chapter_titles:

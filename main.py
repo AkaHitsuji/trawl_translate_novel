@@ -61,7 +61,7 @@ def get_and_save_book(book_id, starting_chapter_num=None, ending_chapter_num=Non
         )
         print(f"retrieved content for title: {title}")
 
-        text_writer.write_to_file(
+        text_writer.write_chapter_to_file(
             book_title=BOOK_TITLE, chapter_title=title, content=content
         )
         print(f"saved {title}")
@@ -76,34 +76,39 @@ def get_and_save_book_novelfull(
 
     text_writer = TextReaderWriter()
 
-    chapter_titles = novelfull_trawler.get_chapter_titles(book_id)
-    # breakpoint()
-    if (
-        starting_chapter_num is not None
-        and chapter_titles.get(starting_chapter_num) is None
-    ):
-        raise ValueError("bad starting chapter number provided")
-    if (
-        ending_chapter_num is not None
-        and chapter_titles.get(ending_chapter_num) is None
-    ):
-        raise ValueError("bad ending chapter number provided")
+    book_cover = novelfull_trawler.get_book_cover(book_id)
+    if book_cover is None:
+        print("unable to download book cover")
+    else:
+        text_writer.save_book_cover(book_title=book_id, image_bytes=book_cover)
 
-    start = int(starting_chapter_num) if starting_chapter_num else 1
-    end = (
-        int(ending_chapter_num) if ending_chapter_num else int(list(chapter_titles)[-1])
-    )
+    # chapter_titles = novelfull_trawler.get_chapter_titles(book_id)
+    # if (
+    #     starting_chapter_num is not None
+    #     and chapter_titles.get(starting_chapter_num) is None
+    # ):
+    #     raise ValueError("bad starting chapter number provided")
+    # if (
+    #     ending_chapter_num is not None
+    #     and chapter_titles.get(ending_chapter_num) is None
+    # ):
+    #     raise ValueError("bad ending chapter number provided")
 
-    for chapter_num in range(start, end + 1):
-        print(f"retrieving content for chapter {chapter_num}..")
-        title, content = novelfull_trawler.get_chapter(
-            book_id=book_id, chapter_num=str(chapter_num)
-        )
-        print(f"retrieved content for title: {title}")
+    # start = int(starting_chapter_num) if starting_chapter_num else 1
+    # end = (
+    #     int(ending_chapter_num) if ending_chapter_num else int(list(chapter_titles)[-1])
+    # )
 
-        text_writer.write_to_file(
-            book_title=book_id, chapter_title=title, content=content
-        )
+    # for chapter_num in range(start, end + 1):
+    #     print(f"retrieving content for chapter {chapter_num}..")
+    #     title, content = novelfull_trawler.get_chapter(
+    #         book_id=book_id, chapter_num=str(chapter_num)
+    #     )
+    #     print(f"retrieved content for title: {title}")
+
+    #     text_writer.write_chapter_to_file(
+    #         book_title=book_id, chapter_title=title, content=content
+    #     )
 
 
 @command
@@ -114,7 +119,7 @@ def save_chapter(book_id, chapter_num):
     title, content = uukanshu_trawler.get_chapter(
         book_id=str(book_id), chapter_num=str(chapter_num)
     )
-    text_writer.write_to_file(
+    text_writer.write_chapter_to_file(
         book_title=BOOK_TITLE, chapter_title=title, content=content
     )
 
@@ -136,7 +141,7 @@ def translate_chapter(chapter_num):
     english_title = novelhi_translator.translate_text(chinese_title).strip()
     english_content = novelhi_translator.translate_text(chinese_content)
     print("translated to english, saving to file")
-    text_rw.write_to_file(
+    text_rw.write_chapter_to_file(
         book_title=BOOK_TITLE,
         chapter_title=f"{chapter_num}_{english_title}",
         content=english_content,
@@ -173,7 +178,7 @@ def translate_chapters(starting_chapter_num=None, ending_chapter_num=None):
 
         print("translated to english, saving to file")
         print(f"english title: {english_title}")
-        text_rw.write_to_file(
+        text_rw.write_chapter_to_file(
             book_title=BOOK_TITLE,
             chapter_title=english_title,
             content=english_content,
