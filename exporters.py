@@ -21,7 +21,12 @@ class EpubExporter(BaseExporter):
         book.add_author(book_info.get("Author"))
 
         # cover page
-        cover_image = epub.EpubItem(uid="cover", file_name="cover.jpg", media_type="image/jpeg", content=cover_page)
+        cover_image = epub.EpubItem(
+            uid="cover",
+            file_name="cover.jpg",
+            media_type="image/jpeg",
+            content=cover_page,
+        )
         book.add_item(cover_image)
 
         # Create introduction chapter

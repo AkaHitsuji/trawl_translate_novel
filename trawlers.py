@@ -183,6 +183,10 @@ class NovelFullTrawler(BaseNovelTrawler):
 
             book_info[key] = value
 
+        # get book desc too
+        description_text = soup.find("div", class_="desc-text").get_text("\n")
+        book_info["description"] = description_text
+
         return book_info
 
     def get_book_cover(self, book_id: str) -> Optional[bytes]:

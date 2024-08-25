@@ -105,7 +105,7 @@ def get_and_save_book_novelfull(
     print(starting_chapter_num, ending_chapter_num)
     novelfull_trawler = NovelFullTrawler()
 
-    text_writer = TextReaderWriter()
+    text_writer = TextReaderWriter(book_id)
 
     # download book cover
     book_cover = novelfull_trawler.get_book_cover(book_id)
