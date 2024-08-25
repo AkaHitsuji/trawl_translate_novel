@@ -33,15 +33,19 @@ def export_epub(book_id):
 
     # get content
     chapter_paths = text_reader.get_book_titles(order_key=order_key)
+    print("retrieved chapter titles")
 
     content_chapters = {}
     for path in chapter_paths:
         title, content = text_reader.get_chapter_content(path)
         content_chapters[title] = content
+    print(f"retrieved content for {len(chapter_paths)} chapters")
 
     # get cover image and book info
     cover_image, book_info = text_reader.get_info_and_cover()
+    print("retrieved cover image and book info")
 
+    print("creating epub..")
     # create epub
     epub_exporter.export_epub(
         cover_page=cover_image,
