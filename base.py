@@ -1,3 +1,4 @@
+import json
 import os
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Tuple
@@ -86,6 +87,26 @@ class TextReaderWriter:
             file.write(image_bytes)
             file.close()
         print(f"saved cover image")
+
+    def save_book_info(
+        self,
+        book_title: str,
+        book_info: Dict,
+        is_downloaded: bool = True,
+    ):
+        """
+        is_downloaded: bool. Determines if should write to downloaded dir or translated dir
+        """
+        parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
+        filepath = f"{parent_dir}/{book_title}/book_info.json"
+        # to make sure file path exists before writing
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+        with open(filepath, "w", encoding="utf-8") as file:
+            json.dump(book_info, file, ensure_ascii=False, indent=2)
+            file.close()
+
+        print(f"saved book info")
 
     def get_book_titles(
         self,

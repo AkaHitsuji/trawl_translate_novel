@@ -166,6 +166,25 @@ class NovelFullTrawler(BaseNovelTrawler):
     def __init__(self) -> None:
         self.chapter_titles = None
 
+    def get_book_info(self, book_id: str) -> Dict:
+        homepage = f"{self.NOVEL_URL}/{book_id}.html"
+
+        html = self._get_content(homepage)
+        soup = BeautifulSoup(html, "html.parser")
+        info_divs = soup.find("div", class_="info").find_all("div")
+        book_info = {}
+        for div in info_divs:
+            key = div.find("h3").text.strip(":")
+            # Handle cases where multiple <a> tags or text values are present
+            if div.find_all("a"):
+                value = ", ".join(a.text for a in div.find_all("a"))
+            else:
+                value = div.get_text(strip=True).replace(key + ":", "").strip()
+
+            book_info[key] = value
+
+        return book_info
+
     def get_book_cover(self, book_id: str) -> Optional[bytes]:
         homepage = f"{self.NOVEL_URL}/{book_id}.html"
 
