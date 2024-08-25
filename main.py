@@ -3,6 +3,7 @@ from typing import List
 from commandr import Run, command
 
 from base import TextReaderWriter
+from exporters import EpubExporter
 from translators import ChatGPTTranslator, NovelHiTranslator
 from trawlers import NovelFullTrawler, UukanshuNovelTrawler
 
@@ -28,6 +29,9 @@ def export_epub(book_id):
     order_key = "Chapter (\d+)"
 
     text_reader = TextReaderWriter(book_id)
+    epub_exporter = EpubExporter(book_id)
+
+    # get content
     chapter_paths = text_reader.get_book_titles(order_key=order_key)
     chapter_paths = [chapter_paths[0]]
 
@@ -35,7 +39,12 @@ def export_epub(book_id):
     for path in chapter_paths:
         title, content = text_reader.get_chapter_content(path)
         content_chapters[title] = content
-    breakpoint()
+    # breakpoint()
+
+    # get cover image and book info
+    epub_exporter.export_epub(
+        book_info={"Author": "test"}, book_content=content_chapters
+    )
 
 
 @command

@@ -157,6 +157,25 @@ class TextReaderWriter:
         chapter_title = chapter_path.split(".")[0]
         return chapter_title, content
 
+    # def get_info_and_cover(
+    #     self,
+    #     is_downloaded: bool = True,
+    # ):
+    #     """
+    #     Returns (title, content)
+    #     """
+    #     parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
+
+    #     folderpath = f"{parent_dir}/{self.book_title}"
+
+    #     filepath = f"{folderpath}/{chapter_path}"
+    #     with open(filepath) as f:
+    #         content = f.read()
+    #         f.close()
+
+    #     chapter_title = chapter_path.split(".")[0]
+    #     return chapter_title, content
+
     def get_file_content(
         self,
         book_title: str,
