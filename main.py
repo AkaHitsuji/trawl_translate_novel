@@ -33,13 +33,11 @@ def export_epub(book_id):
 
     # get content
     chapter_paths = text_reader.get_book_titles(order_key=order_key)
-    chapter_paths = [chapter_paths[0]]
 
     content_chapters = {}
     for path in chapter_paths:
         title, content = text_reader.get_chapter_content(path)
         content_chapters[title] = content
-    # breakpoint()
 
     # get cover image and book info
     cover_image, book_info = text_reader.get_info_and_cover()

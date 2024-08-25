@@ -1,3 +1,4 @@
+import re
 from typing import Dict
 from ebooklib import epub
 from base import BaseExporter
@@ -44,6 +45,9 @@ class EpubExporter(BaseExporter):
 
         # Add chapters to the EPUB
         for chapter_title, chapter_content in book_content.items():
+            # sanitise % from title
+            chapter_title = chapter_title.replace("%", "percent")
+
             chapter = epub.EpubHtml(
                 title=chapter_title, file_name=f"{chapter_title}.xhtml", lang="en"
             )

@@ -4,3 +4,4 @@ translated_books/
 *.pdf
 *.txt
 __pycache__/
+*.epub
