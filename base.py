@@ -157,24 +157,29 @@ class TextReaderWriter:
         chapter_title = chapter_path.split(".")[0]
         return chapter_title, content
 
-    # def get_info_and_cover(
-    #     self,
-    #     is_downloaded: bool = True,
-    # ):
-    #     """
-    #     Returns (title, content)
-    #     """
-    #     parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
+    def get_info_and_cover(
+        self,
+        is_downloaded: bool = True,
+    ) -> Tuple[Optional[bytes], Dict]:
+        """
+        Returns (title, content)
+        """
+        parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
 
-    #     folderpath = f"{parent_dir}/{self.book_title}"
+        folderpath = f"{parent_dir}/{self.book_title}"
 
-    #     filepath = f"{folderpath}/{chapter_path}"
-    #     with open(filepath) as f:
-    #         content = f.read()
-    #         f.close()
+        # TODO: account for scenario when there is no cover image
+        cover_image_path = f"{folderpath}/{self.COVER_IMAGE_FILENAME}"
+        with open(cover_image_path, "rb") as f:
+            cover_image_content = f.read()
+            f.close()
 
-    #     chapter_title = chapter_path.split(".")[0]
-    #     return chapter_title, content
+        book_info_path = f"{folderpath}/{self.BOOK_INFO_FILENAME}"
+        with open(book_info_path, "r") as f:
+            book_info = json.load(f)
+            f.close()
+
+        return cover_image_content, book_info
 
     def get_file_content(
         self,

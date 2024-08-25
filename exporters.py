@@ -11,7 +11,7 @@ class EpubExporter(BaseExporter):
         self.book_title = self._format_title()
 
     # TODO: complete implementation of this method
-    def export_epub(self, book_info: Dict, book_content: Dict):
+    def export_epub(self, cover_page: bytes, book_info: Dict, book_content: Dict):
         # Create a new EPUB book
         book = epub.EpubBook()
 
@@ -19,6 +19,10 @@ class EpubExporter(BaseExporter):
         book.set_title(self.book_id)
         book.set_language("en")
         book.add_author(book_info.get("Author"))
+
+        # cover page
+        cover_image = epub.EpubItem(uid="cover", file_name="cover.jpg", media_type="image/jpeg", content=cover_page)
+        book.add_item(cover_image)
 
         # Create introduction chapter
         chapter_intro = epub.EpubHtml(

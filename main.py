@@ -42,8 +42,13 @@ def export_epub(book_id):
     # breakpoint()
 
     # get cover image and book info
+    cover_image, book_info = text_reader.get_info_and_cover()
+
+    # create epub
     epub_exporter.export_epub(
-        book_info={"Author": "test"}, book_content=content_chapters
+        cover_page=cover_image,
+        book_info=book_info,
+        book_content=content_chapters,
     )
 
 
