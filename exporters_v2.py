@@ -5,7 +5,7 @@ import traceback
 import sys
 import datetime
 import os
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from base import BaseExporter
 from ebooklib import epub
 
@@ -59,6 +59,43 @@ class EpubExporterV2(BaseExporter):
                 html_content += f"<p>{paragraph.strip()}</p>\n"
                 
         return html_content
+
+    def _extract_chapter_number(self, chapter_title: str) -> int:
+        """
+        Extract chapter number from chapter title for correct sorting.
+        
+        Args:
+            chapter_title: The title of the chapter
+            
+        Returns:
+            int: The chapter number, or 0 if no number is found
+        """
+        match = re.search(r'Chapter\s+(\d+)', chapter_title, re.IGNORECASE)
+        if match:
+            return int(match.group(1))
+        return 0
+
+    def _sort_chapters(self, book_content: Dict[str, str]) -> List[Tuple[str, str]]:
+        """
+        Sort chapters by their numerical order rather than lexicographical order.
+        
+        Args:
+            book_content: Dictionary mapping chapter titles to chapter content
+            
+        Returns:
+            List[Tuple[str, str]]: Sorted list of (chapter_title, chapter_content) pairs
+        """
+        # Create a list of (chapter_title, chapter_content, chapter_number)
+        chapters_with_numbers = []
+        for chapter_title, chapter_content in book_content.items():
+            chapter_number = self._extract_chapter_number(chapter_title)
+            chapters_with_numbers.append((chapter_title, chapter_content, chapter_number))
+        
+        # Sort by chapter number
+        sorted_chapters = sorted(chapters_with_numbers, key=lambda x: x[2])
+        
+        # Return just the title and content
+        return [(title, content) for title, content, _ in sorted_chapters]
 
     def export_epub(self, cover_page: bytes, book_info: Dict, book_content: Dict) -> bool:
         """
@@ -157,8 +194,11 @@ class EpubExporterV2(BaseExporter):
                 book.add_item(intro_chapter)
                 chapters.append(intro_chapter)
             
+            # Sort chapters by numerical order rather than lexicographical order
+            sorted_chapters = self._sort_chapters(book_content)
+            
             # Add book chapters
-            for i, (chapter_title, chapter_content) in enumerate(sorted(book_content.items())):
+            for i, (chapter_title, chapter_content) in enumerate(sorted_chapters):
                 if not chapter_content.strip():
                     logger.warning(f"Empty content for chapter {chapter_title}, skipping")
                     continue
@@ -250,11 +290,10 @@ class EpubExporterV2(BaseExporter):
         and applying title case.
         
         Returns:
-            Formatted book title
+            str: Formatted book title
         """
-        title = self.book_id
-        title = title.replace("-", " ")
-        title = title.title()
+        words = self.book_id.replace('-', ' ').split()
+        title = ' '.join(word.capitalize() for word in words)
         return title
 
 # Example usage:
