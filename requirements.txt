@@ -3,7 +3,7 @@ EbookLib==0.18
 html2text==2020.1.16
 pycnnum==1.0.1
 PyPDF2==3.0.1
-Requests==2.32.3
+requests==2.32.3
 selenium==4.32.0
 typer==0.15.4
-undetected_chromedriver==3.5.3
+undetected-chromedriver==3.5.3

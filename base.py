@@ -43,11 +43,26 @@ class BaseNovelTrawler(ABC):
         pass
 
 
+class BaseTranslator(ABC):
+    @abstractmethod
+    def translate_text(self, text: str) -> str:
+        """
+        Translates text from one language to another
+        
+        Returns the translated text
+        """
+        pass
+
+
 class TextReaderWriter:
+    """
+    Handles reading and writing text files for books, chapters, covers, and metadata.
+    Manages file organization for both downloaded and translated content.
+    """
     COVER_IMAGE_FILENAME = "cover_image.jpg"
     BOOK_INFO_FILENAME = "book_info.json"
 
-    def __init__(self, book_title):
+    def __init__(self, book_title: str):
         self.downloaded_dir = "downloaded_books"
         self.translated_dir = "translated_books"
         self.book_title = book_title
@@ -58,77 +73,121 @@ class TextReaderWriter:
         chapter_title: str,
         content: str,
         is_downloaded: bool = True,
-    ):
+    ) -> None:
         """
-        is_downloaded: bool. Determines if should write to downloaded dir or translated dir
+        Write chapter content to a file.
+        
+        Args:
+            book_title: Title of the book
+            chapter_title: Title of the chapter
+            content: Chapter content to write
+            is_downloaded: Whether to write to downloaded dir (True) or translated dir (False)
         """
         parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
         chapter_title = self._format_chapter_special_char(chapter_title)
-        # breakpoint()
         filepath = f"{parent_dir}/{book_title}/{chapter_title}.txt"
-        # to make sure file path exists before writing
+        
+        # Ensure directory exists
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
-        with open(filepath, "w") as file:
-            file.write(content)
-            file.close()
-        print(f"saved {chapter_title}")
+        try:
+            with open(filepath, "w", encoding="utf-8") as file:
+                file.write(content)
+            print(f"Saved {chapter_title}")
+        except IOError as e:
+            print(f"Error saving chapter {chapter_title}: {str(e)}")
 
     def save_book_cover(
         self,
         book_title: str,
         image_bytes: bytes,
         is_downloaded: bool = True,
-    ):
+    ) -> bool:
         """
-        is_downloaded: bool. Determines if should write to downloaded dir or translated dir
+        Save book cover image.
+        
+        Args:
+            book_title: Title of the book
+            image_bytes: Cover image as bytes
+            is_downloaded: Whether to write to downloaded dir (True) or translated dir (False)
+            
+        Returns:
+            bool: True if successful, False otherwise
         """
         parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
         filepath = f"{parent_dir}/{book_title}/{self.COVER_IMAGE_FILENAME}"
-        # to make sure file path exists before writing
+        
+        # Ensure directory exists
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
-        with open(filepath, "wb") as file:
-            file.write(image_bytes)
-            file.close()
-        print(f"saved cover image")
+        try:
+            with open(filepath, "wb") as file:
+                file.write(image_bytes)
+            print("Saved cover image")
+            return True
+        except IOError as e:
+            print(f"Error saving cover image: {str(e)}")
+            return False
 
     def save_book_info(
         self,
         book_title: str,
         book_info: Dict,
         is_downloaded: bool = True,
-    ):
+    ) -> bool:
         """
-        is_downloaded: bool. Determines if should write to downloaded dir or translated dir
+        Save book information as JSON.
+        
+        Args:
+            book_title: Title of the book
+            book_info: Dictionary of book metadata
+            is_downloaded: Whether to write to downloaded dir (True) or translated dir (False)
+            
+        Returns:
+            bool: True if successful, False otherwise
         """
         parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
         filepath = f"{parent_dir}/{book_title}/{self.BOOK_INFO_FILENAME}"
-        # to make sure file path exists before writing
+        
+        # Ensure directory exists
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
-        with open(filepath, "w", encoding="utf-8") as file:
-            json.dump(book_info, file, ensure_ascii=False, indent=2)
-            file.close()
+        try:
+            with open(filepath, "w", encoding="utf-8") as file:
+                json.dump(book_info, file, ensure_ascii=False, indent=2)
+            print("Saved book info")
+            return True
+        except IOError as e:
+            print(f"Error saving book info: {str(e)}")
+            return False
 
-        print(f"saved book info")
-
-    def get_book_titles(self, order_key: Optional[str]) -> List[str]:
+    def get_book_titles(self, order_key: Optional[str] = None) -> List[str]:
+        """
+        Get all chapter titles for a book.
+        
+        Args:
+            order_key: Optional regex pattern to extract chapter numbers for ordering
+            
+        Returns:
+            List of chapter filenames
+        """
         parent_dir = self.downloaded_dir
         folderpath = f"{parent_dir}/{self.book_title}"
-        chapter_titles = os.listdir(folderpath)
+        
+        try:
+            chapter_titles = os.listdir(folderpath)
+        except FileNotFoundError:
+            print(f"Book directory not found: {folderpath}")
+            return []
 
-        # remove non chapter files
+        # Remove non-chapter files
         chapter_titles = [
-            f
-            for f in chapter_titles
+            f for f in chapter_titles
             if f not in [self.COVER_IMAGE_FILENAME, self.BOOK_INFO_FILENAME]
         ]
 
-        # order titles
-        # Chapter (\d+)
+        # Order titles if order_key is provided
         if order_key:
-
             def extract_chapter_number(title):
                 match = re.search(rf"{order_key}", title)
                 return int(match.group(1)) if match else 0
@@ -141,43 +200,70 @@ class TextReaderWriter:
         self,
         chapter_path: str,
         is_downloaded: bool = True,
-    ):
+    ) -> Tuple[str, str]:
         """
-        Returns (title, content)
+        Get chapter content from a file.
+        
+        Args:
+            chapter_path: Path to the chapter file relative to the book directory
+            is_downloaded: Whether to read from downloaded dir (True) or translated dir (False)
+            
+        Returns:
+            Tuple of (chapter_title, content)
         """
         parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
-
         folderpath = f"{parent_dir}/{self.book_title}"
-
         filepath = f"{folderpath}/{chapter_path}"
-        with open(filepath) as f:
-            content = f.read()
-            f.close()
-
-        chapter_title = chapter_path.split(".")[0]
-        return chapter_title, content
+        
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                content = f.read()
+            
+            chapter_title = chapter_path.split(".")[0]
+            return chapter_title, content
+        except IOError as e:
+            print(f"Error reading chapter {chapter_path}: {str(e)}")
+            return chapter_path.split(".")[0], ""
 
     def get_info_and_cover(
         self,
         is_downloaded: bool = True,
     ) -> Tuple[Optional[bytes], Dict]:
         """
-        Returns (title, content)
+        Get book cover image and info.
+        
+        Args:
+            is_downloaded: Whether to read from downloaded dir (True) or translated dir (False)
+            
+        Returns:
+            Tuple of (cover_image_bytes, book_info_dict)
         """
         parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
-
         folderpath = f"{parent_dir}/{self.book_title}"
-
-        # TODO: account for scenario when there is no cover image
+        
+        # Get cover image
+        cover_image_content = None
         cover_image_path = f"{folderpath}/{self.COVER_IMAGE_FILENAME}"
-        with open(cover_image_path, "rb") as f:
-            cover_image_content = f.read()
-            f.close()
-
+        try:
+            with open(cover_image_path, "rb") as f:
+                cover_image_content = f.read()
+        except FileNotFoundError:
+            print(f"Cover image not found at {cover_image_path}")
+        except IOError as e:
+            print(f"Error reading cover image: {str(e)}")
+        
+        # Get book info
+        book_info = {}
         book_info_path = f"{folderpath}/{self.BOOK_INFO_FILENAME}"
-        with open(book_info_path, "r") as f:
-            book_info = json.load(f)
-            f.close()
+        try:
+            with open(book_info_path, "r", encoding="utf-8") as f:
+                book_info = json.load(f)
+        except FileNotFoundError:
+            print(f"Book info not found at {book_info_path}")
+        except json.JSONDecodeError:
+            print(f"Invalid JSON in book info file: {book_info_path}")
+        except IOError as e:
+            print(f"Error reading book info: {str(e)}")
 
         return cover_image_content, book_info
 
@@ -188,29 +274,51 @@ class TextReaderWriter:
         is_downloaded: bool = True,
     ) -> Tuple[str, str]:
         """
-        Returns (title, content)
+        Get content from a specific chapter file by chapter number.
+        
+        Args:
+            book_title: Title of the book
+            chapter_num: Chapter number to retrieve
+            is_downloaded: Whether to read from downloaded dir (True) or translated dir (False)
+            
+        Returns:
+            Tuple of (chapter_title, content)
         """
         parent_dir = self.downloaded_dir if is_downloaded else self.translated_dir
-
         folderpath = f"{parent_dir}/{book_title}"
-        chapter_titles = os.listdir(folderpath)
+        
+        try:
+            chapter_titles = os.listdir(folderpath)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Book directory not found: {folderpath}")
+        
         chapter_title = self._get_chapter_title(chapter_num, chapter_titles)
         if not chapter_title:
-            raise ValueError(
-                f"chapter number not found in {parent_dir}/{book_title} directory"
-            )
+            raise ValueError(f"Chapter number {chapter_num} not found in {folderpath}")
 
         chapter_path = f"{folderpath}/{chapter_title}"
-        with open(chapter_path) as f:
-            content = f.read()
-            f.close()
-
-        chapter_title = chapter_title.split(".")[0]
-        return chapter_title, content
+        try:
+            with open(chapter_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            
+            chapter_title = chapter_title.split(".")[0]
+            return chapter_title, content
+        except IOError as e:
+            raise IOError(f"Error reading chapter {chapter_title}: {str(e)}")
 
     def _get_chapter_title(
         self, chapter_num: str, chapter_titles: List[str]
     ) -> Optional[str]:
+        """
+        Find the matching chapter title for a chapter number.
+        
+        Args:
+            chapter_num: Chapter number to find
+            chapter_titles: List of chapter titles to search
+            
+        Returns:
+            Matching chapter title or None if not found
+        """
         for title in chapter_titles:
             num = title.split("_")[0]
             if num == chapter_num:
@@ -218,13 +326,14 @@ class TextReaderWriter:
         return None
 
     def _format_chapter_special_char(self, chapter_title: str) -> str:
-        return chapter_title.replace("/", "-")
-
-
-class BaseTranslator(ABC):
-    @abstractmethod
-    def translate_text(self, content) -> str:
         """
-        Translates content from chinese to english
+        Format chapter title to be safe for filenames.
+        
+        Args:
+            chapter_title: Original chapter title
+            
+        Returns:
+            Sanitized chapter title
         """
-        pass
+        # Replace problematic characters with safe alternatives
+        return chapter_title.replace("/", "-").replace(":", "_").replace("?", "")

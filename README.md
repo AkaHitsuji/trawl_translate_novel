@@ -39,74 +39,81 @@ OPENAI_PASSWORD = "your-password"
 
 ## Usage
 
-The application uses the `commandr` library to provide a command-line interface. Here are the main commands:
+The application uses the `typer` library to provide a command-line interface. Here are the main commands:
 
 ### Scraping Novel Content
 
 #### Get a whole book from NovelFull
 ```
-python main.py get_and_save_book_novelfull <book_id> [<starting_chapter_num> <ending_chapter_num>]
+python -m main get-and-save-book-novelfull <book_id> [<starting_chapter_num>] [<ending_chapter_num>]
 ```
 
 #### Get a whole book from Uukanshu
 ```
-python main.py get_and_save_book <book_id> [<starting_chapter_num> <ending_chapter_num>]
+python -m main get-and-save-book <book_id> [<starting_chapter_num>] [<ending_chapter_num>]
 ```
 
 #### Get a single chapter
 ```
-python main.py get_chapter <book_id> <chapter_num>
+python -m main get-chapter <book_id> <chapter_num>
 ```
 
 #### Save a single chapter
 ```
-python main.py save_chapter <book_id> <chapter_num>
+python -m main save-chapter <book_id> <chapter_num>
+```
+
+#### List chapter titles
+```
+python -m main get-titles
 ```
 
 ### Translation
 
 #### Translate a single chapter
 ```
-python main.py translate_chapter <chapter_num>
+python -m main translate-chapter <chapter_num>
 ```
 
 #### Translate a range of chapters
 ```
-python main.py translate_chapters <starting_chapter_num> <ending_chapter_num>
+python -m main translate-chapters <starting_chapter_num> <ending_chapter_num>
 ```
 
 ### Export
 
 #### Export to EPUB
 ```
-python main.py export_epub <book_id>
+python -m main export-epub <book_id> [--debug] [--use-v1]
 ```
 
 ## Project Structure
 
-- `main.py` - Main command-line interface
+- `main.py` - Main command-line interface using Typer
 - `trawlers.py` - Web scrapers for novel sites (UukanshuNovelTrawler, NovelFullTrawler)
 - `translators.py` - Translation services (ChatGPTTranslator, NovelHiTranslator)
 - `exporters.py` - EPUB creation (EpubExporter)
+- `exporters_v2.py` - Improved EPUB creation (EpubExporterV2)
 - `base.py` - Base classes and file management utilities
 - `downloaded_books/` - Directory for downloaded original language content
 - `translated_books/` - Directory for translated content
+- `browsers/` - Contains selenium handlers for NovelHi and ChatGPT
 
 ## Example Workflow
 
-1. Download a novel:
+1. Download a novel from NovelFull:
 ```
-python main.py get_and_save_book_novelfull reverend-insanity
+python -m main get-and-save-book-novelfull reverend-insanity
 ```
 
 2. Translate chapters:
 ```
-python main.py translate_chapters 1 10
+python -m main translate-chapters 1 10
 ```
 
 3. Export to EPUB:
 ```
-python main.py export_epub reverend-insanity
+python -m main export-epub reverend-insanity
 ```
 
 ## Notes
@@ -114,3 +121,5 @@ python main.py export_epub reverend-insanity
 - The tool handles Chinese-specific numbering systems and fixes chapter title discrepancies
 - For long chapters, the translator automatically splits the content into manageable chunks
 - Book information and cover images are preserved in the EPUB output
+- The application now uses the Typer library for CLI commands, which uses hyphens in command names instead of underscores
+- Two EPUB exporter versions are available, with V2 being the default and offering improved formatting

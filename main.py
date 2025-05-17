@@ -8,6 +8,13 @@ from exporters import EpubExporter
 from exporters_v2 import EpubExporterV2
 from translators import ChatGPTTranslator, NovelHiTranslator
 from trawlers import NovelFullTrawler, UukanshuNovelTrawler
+from utils import (
+    split_content, 
+    combine_content, 
+    load_translated_titles, 
+    get_translated_title,
+    validate_chapter_range
+)
 
 # Create Typer app
 app = typer.Typer()
@@ -32,40 +39,36 @@ STARTING_CHAPTER_ID = 7392047
 BOOK_TITLE = "nshba"
 
 
-class NovelTranslater:
-    def __init__(self, translater_api_key: str):
-        self.translater_api_key = translater_api_key
-
-
 @app.command()
 def export_epub(book_id: str, debug: bool = False, use_v1: bool = False):
+    """Export a book to EPUB format"""
     # Set up logging with debug level if requested
     setup_logging(debug)
     
-    # hardcode order key first, expose as param next time
+    # Regex for chapter numbering
     order_key = "Chapter (\d+)"
 
     text_reader = TextReaderWriter(book_id)
     
-    # epub_exporter = EpubExporter(book_id)
-    epub_exporter = EpubExporterV2(book_id)
+    # Select the appropriate exporter based on the use_v1 flag
+    epub_exporter = EpubExporter(book_id) if use_v1 else EpubExporterV2(book_id)
     
-    # get content
+    # Get content
     chapter_paths = text_reader.get_book_titles(order_key=order_key)
-    print("retrieved chapter titles")
+    print("Retrieved chapter titles")
 
     content_chapters = {}
     for path in chapter_paths:
         title, content = text_reader.get_chapter_content(path)
         content_chapters[title] = content
-    print(f"retrieved content for {len(chapter_paths)} chapters")
+    print(f"Retrieved content for {len(chapter_paths)} chapters")
 
-    # get cover image and book info
+    # Get cover image and book info
     cover_image, book_info = text_reader.get_info_and_cover()
-    print("retrieved cover image and book info")
+    print("Retrieved cover image and book info")
 
-    print("creating epub..")
-    # create epub
+    print("Creating EPUB...")
+    # Create epub
     epub_exporter.export_epub(
         cover_page=cover_image,
         book_info=book_info,
@@ -75,6 +78,7 @@ def export_epub(book_id: str, debug: bool = False, use_v1: bool = False):
 
 @app.command()
 def get_chapter(book_id: str, chapter_num: str):
+    """Get a single chapter from a book"""
     uukanshu_trawler = UukanshuNovelTrawler()
     title, content = uukanshu_trawler.get_chapter(
         book_id=book_id, chapter_num=chapter_num
@@ -89,21 +93,12 @@ def get_and_save_book(
     starting_chapter_num: Optional[str] = None, 
     ending_chapter_num: Optional[str] = None
 ):
-    print(starting_chapter_num, ending_chapter_num)
+    """Download and save a book from Uukanshu"""
     uukanshu_trawler = UukanshuNovelTrawler()
-    text_writer = TextReaderWriter()
+    text_writer = TextReaderWriter(book_id)
 
     chapter_titles = uukanshu_trawler.get_chapter_titles(book_id)
-    if (
-        starting_chapter_num is not None
-        and chapter_titles.get(starting_chapter_num) is None
-    ):
-        raise ValueError("bad starting chapter number provided")
-    if (
-        ending_chapter_num is not None
-        and chapter_titles.get(ending_chapter_num) is None
-    ):
-        raise ValueError("bad ending chapter number provided")
+    validate_chapter_range(chapter_titles, starting_chapter_num, ending_chapter_num)
 
     start = int(starting_chapter_num) if starting_chapter_num else 1
     end = (
@@ -111,16 +106,15 @@ def get_and_save_book(
     )
 
     for chapter_num in range(start, end + 1):
-        print(f"retrieving content for chapter {chapter_num}..")
+        print(f"Retrieving content for chapter {chapter_num}...")
         title, content = uukanshu_trawler.get_chapter(
             book_id=book_id, chapter_num=str(chapter_num)
         )
-        print(f"retrieved content for title: {title}")
+        print(f"Retrieved content for title: {title}")
 
         text_writer.write_chapter_to_file(
-            book_title=BOOK_TITLE, chapter_title=title, content=content
+            book_title=book_id, chapter_title=title, content=content
         )
-        print(f"saved {title}")
 
 
 @app.command()
@@ -129,34 +123,24 @@ def get_and_save_book_novelfull(
     starting_chapter_num: Optional[str] = None, 
     ending_chapter_num: Optional[str] = None
 ):
-    print(starting_chapter_num, ending_chapter_num)
+    """Download and save a book from NovelFull"""
     novelfull_trawler = NovelFullTrawler()
-
     text_writer = TextReaderWriter(book_id)
 
-    # download book cover
+    # Download book cover
     book_cover = novelfull_trawler.get_book_cover(book_id)
     if book_cover is None:
-        print("unable to download book cover")
+        print("Unable to download book cover")
     else:
         text_writer.save_book_cover(book_title=book_id, image_bytes=book_cover)
 
-    # download book info
+    # Download book info
     book_info = novelfull_trawler.get_book_info(book_id)
     text_writer.save_book_info(book_title=book_id, book_info=book_info)
 
-    # download book chapters
+    # Download book chapters
     chapter_titles = novelfull_trawler.get_chapter_titles(book_id)
-    if (
-        starting_chapter_num is not None
-        and chapter_titles.get(starting_chapter_num) is None
-    ):
-        raise ValueError("bad starting chapter number provided")
-    if (
-        ending_chapter_num is not None
-        and chapter_titles.get(ending_chapter_num) is None
-    ):
-        raise ValueError("bad ending chapter number provided")
+    validate_chapter_range(chapter_titles, starting_chapter_num, ending_chapter_num)
 
     start = int(starting_chapter_num) if starting_chapter_num else 1
     end = (
@@ -164,11 +148,11 @@ def get_and_save_book_novelfull(
     )
 
     for chapter_num in range(start, end + 1):
-        print(f"retrieving content for chapter {chapter_num}..")
+        print(f"Retrieving content for chapter {chapter_num}...")
         title, content = novelfull_trawler.get_chapter(
             book_id=book_id, chapter_num=str(chapter_num)
         )
-        print(f"retrieved content for title: {title}")
+        print(f"Retrieved content for title: {title}")
 
         text_writer.write_chapter_to_file(
             book_title=book_id, chapter_title=title, content=content
@@ -177,111 +161,140 @@ def get_and_save_book_novelfull(
 
 @app.command()
 def save_chapter(book_id: str, chapter_num: str):
+    """Save a single chapter to a file"""
     uukanshu_trawler = UukanshuNovelTrawler()
-    text_writer = TextReaderWriter()
+    text_writer = TextReaderWriter(book_id)
 
     title, content = uukanshu_trawler.get_chapter(
         book_id=book_id, chapter_num=chapter_num
     )
     text_writer.write_chapter_to_file(
-        book_title=BOOK_TITLE, chapter_title=title, content=content
+        book_title=book_id, chapter_title=title, content=content
     )
 
 
 @app.command()
 def get_chapter_titles(book_id: str):
+    """List all chapter titles for a book"""
     uukanshu_trawler = UukanshuNovelTrawler()
-    uukanshu_trawler.get_chapter_titles(book_id)
+    titles = uukanshu_trawler.get_chapter_titles(book_id)
+    for num, info in titles.items():
+        print(f"{num}: {info['chinese_title']}")
 
 
 @app.command()
-def translate_chapter(chapter_num: str):
-    text_rw = TextReaderWriter()
+def translate_chapter(book_id: str, chapter_num: str):
+    """Translate a single chapter"""
+    text_rw = TextReaderWriter(book_id)
     chinese_title, chinese_content = text_rw.get_file_content(
-        book_title=BOOK_TITLE, chapter_num=chapter_num, is_downloaded=True
+        book_title=book_id, chapter_num=chapter_num, is_downloaded=True
     )
-    print(f"retrieved chinese content {len(chinese_content)}")
+    print(f"Retrieved Chinese content ({len(chinese_content)} chars)")
+    
     novelhi_translator = NovelHiTranslator()
     english_title = novelhi_translator.translate_text(chinese_title).strip()
     english_content = novelhi_translator.translate_text(chinese_content)
-    print("translated to english, saving to file")
+    
+    print("Translated to English, saving to file")
     text_rw.write_chapter_to_file(
-        book_title=BOOK_TITLE,
+        book_title=book_id,
         chapter_title=f"{chapter_num}_{english_title}",
         content=english_content,
         is_downloaded=False,
     )
-    print("translation complete")
+    print("Translation complete")
 
 
 @app.command()
 def translate_chapters(
-    starting_chapter_num: Optional[str] = None, 
-    ending_chapter_num: Optional[str] = None
+    book_id: str,
+    starting_chapter_num: str, 
+    ending_chapter_num: str,
+    titles_file: Optional[str] = None
 ):
-    if starting_chapter_num is None or ending_chapter_num is None:
-        raise ValueError("starting or ending chapter number needs to be provided")
-
-    text_rw = TextReaderWriter()
+    """Translate a range of chapters"""
+    text_rw = TextReaderWriter(book_id)
     novelhi_translator = NovelHiTranslator()
+    
+    # Load translated titles if provided
+    translated_titles = {}
+    if titles_file:
+        translated_titles = load_translated_titles(titles_file)
+    
     for chapter_num in range(int(starting_chapter_num), int(ending_chapter_num) + 1):
-        print(f"processing chapter: {chapter_num}..")
+        print(f"Processing chapter: {chapter_num}...")
         chinese_title, chinese_content = text_rw.get_file_content(
-            book_title=BOOK_TITLE, chapter_num=str(chapter_num), is_downloaded=True
+            book_title=book_id, chapter_num=str(chapter_num), is_downloaded=True
         )
-        print(f"retrieved chinese content {len(chinese_content)}")
+        print(f"Retrieved Chinese content ({len(chinese_content)} chars)")
 
-        # to handle translator not being able to take that much text
-        contents = _split_content(chinese_content)
+        # Split content for translation
+        contents = split_content(chinese_content)
 
-        english_title = _get_translated_title(chapter_num)
-        print(f"retrieved english title: {english_title}, now translating")
+        # Get translated title
+        if titles_file:
+            english_title = get_translated_title(str(chapter_num), translated_titles)
+        else:
+            english_title = f"{chapter_num}_{novelhi_translator.translate_text(chinese_title).strip()}"
+        
+        print(f"Using English title: {english_title}")
 
-        translated_contents: List[str] = []
+        # Translate content in chunks
+        translated_contents = []
         for content in contents:
-            print(f"translating content {len(content)}")
+            print(f"Translating content chunk ({len(content)} chars)")
             translated_contents.append(novelhi_translator.translate_text(content))
-        english_content = _combine_content(translated_contents)
+        
+        english_content = combine_content(translated_contents)
 
-        print("translated to english, saving to file")
-        print(f"english title: {english_title}")
+        print("Translated to English, saving to file")
         text_rw.write_chapter_to_file(
-            book_title=BOOK_TITLE,
+            book_title=book_id,
             chapter_title=english_title,
             content=english_content,
             is_downloaded=False,
         )
-        print(f"translation for chapter: {chapter_num} complete")
+        print(f"Translation for chapter {chapter_num} complete")
 
 
 @app.command()
-def test_split(chapter_num: str):
-    text_rw = TextReaderWriter()
+def test_split(book_id: str, chapter_num: str):
+    """Test the content splitting function"""
+    text_rw = TextReaderWriter(book_id)
     chinese_title, chinese_content = text_rw.get_file_content(
-        book_title=BOOK_TITLE, chapter_num=chapter_num, is_downloaded=True
+        book_title=book_id, chapter_num=chapter_num, is_downloaded=True
     )
-    print(f"retrieved chinese content {len(chinese_content)}")
-    split_contents = _split_content(chinese_content)
-    combined_content = _combine_content(split_contents)
+    print(f"Retrieved Chinese content ({len(chinese_content)} chars)")
+    
+    split_contents = split_content(chinese_content)
+    print(f"Split into {len(split_contents)} chunks")
+    
+    combined_content = combine_content(split_contents)
+    print(f"Combined content length: {len(combined_content)} chars")
+    
+    if chinese_content == combined_content:
+        print("Content unchanged after split/combine")
+    else:
+        print("WARNING: Content changed after split/combine")
 
 
 @app.command()
 def get_titles():
+    """Copy all book titles to clipboard"""
     text_rw = TextReaderWriter(BOOK_TITLE)
-    # Adding order_key parameter with the same regex pattern used in export_epub
     order_key = "Chapter (\d+)"
     titles = text_rw.get_book_titles(order_key=order_key)
     titles_text = "\n".join(titles)
 
-    # Fix subprocess.run to use input parameter correctly
     subprocess.run(["pbcopy"], text=True, input=titles_text, encoding='utf-8')
-    print(f"retrieved all {len(titles)} titles")
+    print(f"Retrieved and copied {len(titles)} titles to clipboard")
 
 
 @app.command()
-def transform_translated_titles():
+def transform_translated_titles(filepath: str = "nshba_translated_titles.txt"):
+    """Transform translated titles to a standardized format"""
     translated_titles = {}
-    filepath = "nshba_translated_titles.txt"
+    
     with open(filepath, "r") as file:
         lines = file.readlines()
         for line in lines:
@@ -291,63 +304,15 @@ def transform_translated_titles():
             title = " ".join([word.capitalize() for word in title.split(" ")])
             final_str = f"{chapter_num}_{title}"
             translated_titles[details[0]] = final_str
-        file.close()
 
     titles = ""
     for i in sorted(translated_titles.keys()):
         titles += f"{translated_titles[i]}\n"
+        
     with open(filepath, "w") as file:
         file.write(titles)
-        file.close()
-    # print(translated_titles)
-
-
-def _split_content(content: str) -> List[str]:
-    thirds = len(content) // 3
-    index = len(content) // 2
-
-    first_third = thirds
-    for i in range(first_third, len(content)):
-        if content[i] == "\n":
-            first_divide_point = i
-            break
-
-    for i in range(first_divide_point + thirds, len(content)):
-        if content[i] == "\n":
-            second_divide_point = i
-            break
-
-    if not first_divide_point or not second_divide_point:
-        raise ValueError("Unable to find split point as no new character")
-
-    first_third = content[: first_divide_point + 1]
-    second_third = content[first_divide_point : second_divide_point + 1]
-    last_third = content[second_divide_point:]
-    return [first_third, second_third, last_third]
-
-
-def _combine_content(contents: List[str]) -> str:
-    combined = ""
-    for content in contents:
-        combined += content
-
-    return combined
-
-
-def _get_translated_title(chapter_num):
-    translated_titles = {}
-    filepath = "nshba_translated_titles.txt"
-    with open(filepath, "r") as file:
-        lines = file.readlines()
-        for line in lines:
-            details = line.split("_")
-            translated_titles[details[0]] = line.strip()
-        file.close()
-
-    title = translated_titles.get(str(chapter_num))
-    if title is None:
-        raise ValueError(f"unable to find {chapter_num} in translated titles")
-    return title
+        
+    print(f"Transformed titles saved to {filepath}")
 
 
 if __name__ == "__main__":
