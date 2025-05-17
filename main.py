@@ -1,18 +1,16 @@
 import subprocess
 import logging
-from typing import List
-from commandr import Run, command
+from typing import List, Optional
+import typer
 
 from base import TextReaderWriter
 from exporters import EpubExporter
-try:
-    from exporters_v2 import EpubExporterV2
-    EPUB_V2_AVAILABLE = True
-except ImportError:
-    EPUB_V2_AVAILABLE = False
-    print("Warning: EpubExporterV2 could not be imported. Falling back to EpubExporter.")
+from exporters_v2 import EpubExporterV2
 from translators import ChatGPTTranslator, NovelHiTranslator
 from trawlers import NovelFullTrawler, UukanshuNovelTrawler
+
+# Create Typer app
+app = typer.Typer()
 
 # Configure logging
 def setup_logging(debug=False):
@@ -39,9 +37,8 @@ class NovelTranslater:
         self.translater_api_key = translater_api_key
 
 
-# TODO: change to click
-@command
-def export_epub(book_id, debug=False, use_v1=False):
+@app.command()
+def export_epub(book_id: str, debug: bool = False, use_v1: bool = False):
     # Set up logging with debug level if requested
     setup_logging(debug)
     
@@ -76,18 +73,22 @@ def export_epub(book_id, debug=False, use_v1=False):
     )
 
 
-@command
-def get_chapter(book_id, chapter_num):
+@app.command()
+def get_chapter(book_id: str, chapter_num: str):
     uukanshu_trawler = UukanshuNovelTrawler()
     title, content = uukanshu_trawler.get_chapter(
-        book_id=str(book_id), chapter_num=str(chapter_num)
+        book_id=book_id, chapter_num=chapter_num
     )
     print(content)
     print(title)
 
 
-@command
-def get_and_save_book(book_id, starting_chapter_num=None, ending_chapter_num=None):
+@app.command()
+def get_and_save_book(
+    book_id: str, 
+    starting_chapter_num: Optional[str] = None, 
+    ending_chapter_num: Optional[str] = None
+):
     print(starting_chapter_num, ending_chapter_num)
     uukanshu_trawler = UukanshuNovelTrawler()
     text_writer = TextReaderWriter()
@@ -122,9 +123,11 @@ def get_and_save_book(book_id, starting_chapter_num=None, ending_chapter_num=Non
         print(f"saved {title}")
 
 
-@command
+@app.command()
 def get_and_save_book_novelfull(
-    book_id, starting_chapter_num=None, ending_chapter_num=None
+    book_id: str, 
+    starting_chapter_num: Optional[str] = None, 
+    ending_chapter_num: Optional[str] = None
 ):
     print(starting_chapter_num, ending_chapter_num)
     novelfull_trawler = NovelFullTrawler()
@@ -172,27 +175,27 @@ def get_and_save_book_novelfull(
         )
 
 
-@command
-def save_chapter(book_id, chapter_num):
+@app.command()
+def save_chapter(book_id: str, chapter_num: str):
     uukanshu_trawler = UukanshuNovelTrawler()
     text_writer = TextReaderWriter()
 
     title, content = uukanshu_trawler.get_chapter(
-        book_id=str(book_id), chapter_num=str(chapter_num)
+        book_id=book_id, chapter_num=chapter_num
     )
     text_writer.write_chapter_to_file(
         book_title=BOOK_TITLE, chapter_title=title, content=content
     )
 
 
-@command
-def get_chapter_titles(book_id):
+@app.command()
+def get_chapter_titles(book_id: str):
     uukanshu_trawler = UukanshuNovelTrawler()
     uukanshu_trawler.get_chapter_titles(book_id)
 
 
-@command
-def translate_chapter(chapter_num):
+@app.command()
+def translate_chapter(chapter_num: str):
     text_rw = TextReaderWriter()
     chinese_title, chinese_content = text_rw.get_file_content(
         book_title=BOOK_TITLE, chapter_num=chapter_num, is_downloaded=True
@@ -211,8 +214,11 @@ def translate_chapter(chapter_num):
     print("translation complete")
 
 
-@command
-def translate_chapters(starting_chapter_num=None, ending_chapter_num=None):
+@app.command()
+def translate_chapters(
+    starting_chapter_num: Optional[str] = None, 
+    ending_chapter_num: Optional[str] = None
+):
     if starting_chapter_num is None or ending_chapter_num is None:
         raise ValueError("starting or ending chapter number needs to be provided")
 
@@ -248,8 +254,8 @@ def translate_chapters(starting_chapter_num=None, ending_chapter_num=None):
         print(f"translation for chapter: {chapter_num} complete")
 
 
-@command
-def test_split(chapter_num):
+@app.command()
+def test_split(chapter_num: str):
     text_rw = TextReaderWriter()
     chinese_title, chinese_content = text_rw.get_file_content(
         book_title=BOOK_TITLE, chapter_num=chapter_num, is_downloaded=True
@@ -259,17 +265,20 @@ def test_split(chapter_num):
     combined_content = _combine_content(split_contents)
 
 
-@command
+@app.command()
 def get_titles():
     text_rw = TextReaderWriter(BOOK_TITLE)
-    titles = text_rw.get_book_titles()
+    # Adding order_key parameter with the same regex pattern used in export_epub
+    order_key = "Chapter (\d+)"
+    titles = text_rw.get_book_titles(order_key=order_key)
     titles_text = "\n".join(titles)
 
-    subprocess.run("pbcopy", text=True, input=titles_text)
+    # Fix subprocess.run to use input parameter correctly
+    subprocess.run(["pbcopy"], text=True, input=titles_text, encoding='utf-8')
     print(f"retrieved all {len(titles)} titles")
 
 
-@command
+@app.command()
 def transform_translated_titles():
     translated_titles = {}
     filepath = "nshba_translated_titles.txt"
@@ -342,4 +351,4 @@ def _get_translated_title(chapter_num):
 
 
 if __name__ == "__main__":
-    Run()
+    app()
