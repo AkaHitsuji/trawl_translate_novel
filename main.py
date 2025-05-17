@@ -5,6 +5,12 @@ from commandr import Run, command
 
 from base import TextReaderWriter
 from exporters import EpubExporter
+try:
+    from exporters_v2 import EpubExporterV2
+    EPUB_V2_AVAILABLE = True
+except ImportError:
+    EPUB_V2_AVAILABLE = False
+    print("Warning: EpubExporterV2 could not be imported. Falling back to EpubExporter.")
 from translators import ChatGPTTranslator, NovelHiTranslator
 from trawlers import NovelFullTrawler, UukanshuNovelTrawler
 
@@ -35,7 +41,7 @@ class NovelTranslater:
 
 # TODO: change to click
 @command
-def export_epub(book_id, debug=False):
+def export_epub(book_id, debug=False, use_v1=False):
     # Set up logging with debug level if requested
     setup_logging(debug)
     
@@ -43,8 +49,10 @@ def export_epub(book_id, debug=False):
     order_key = "Chapter (\d+)"
 
     text_reader = TextReaderWriter(book_id)
-    epub_exporter = EpubExporter(book_id)
-
+    
+    # epub_exporter = EpubExporter(book_id)
+    epub_exporter = EpubExporterV2(book_id)
+    
     # get content
     chapter_paths = text_reader.get_book_titles(order_key=order_key)
     print("retrieved chapter titles")

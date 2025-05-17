@@ -98,7 +98,18 @@ class EpubExporter(BaseExporter):
 
                         # Format chapter content
                         chapter_content_formatted = chapter_content.replace("\n", "<br/>")
-                        html_content = f"<h1>{chapter_title}</h1><p>{chapter_content_formatted}</p>"
+                        html_content = f"""
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+<head>
+    <title>{chapter_title}</title>
+</head>
+<body>
+    <h1>{chapter_title}</h1>
+    <p>{chapter_content_formatted}</p>
+</body>
+</html>
+"""
                         logger.debug(f"HTML content length: {len(html_content)}")
                         
                         # Create chapter object
