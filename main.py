@@ -1,4 +1,5 @@
 import subprocess
+import logging
 from typing import List
 from commandr import Run, command
 
@@ -6,6 +7,16 @@ from base import TextReaderWriter
 from exporters import EpubExporter
 from translators import ChatGPTTranslator, NovelHiTranslator
 from trawlers import NovelFullTrawler, UukanshuNovelTrawler
+
+# Configure logging
+def setup_logging(debug=False):
+    log_level = logging.DEBUG if debug else logging.INFO
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    # Set exporters logger level
+    logging.getLogger('exporters').setLevel(log_level)
 
 # OPENAI_KEY = hidden_file.OPENAI_KEY
 # OPENAI_USERNAME = hidden_file.OPENAI_USERNAME
@@ -24,7 +35,10 @@ class NovelTranslater:
 
 # TODO: change to click
 @command
-def export_epub(book_id):
+def export_epub(book_id, debug=False):
+    # Set up logging with debug level if requested
+    setup_logging(debug)
+    
     # hardcode order key first, expose as param next time
     order_key = "Chapter (\d+)"
 
