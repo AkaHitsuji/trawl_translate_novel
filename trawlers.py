@@ -1,11 +1,14 @@
 import os
 import re
+import logging
 from typing import Dict, Optional, Tuple
 import requests
 from base import BaseNovelTrawler
 from bs4 import BeautifulSoup
 from pycnnum import cn2num
 
+# Configure logging
+logger = logging.getLogger(__name__)
 
 class UukanshuNovelTrawler(BaseNovelTrawler):
     NOVEL_URL = "https://uukanshu.cc"
@@ -74,12 +77,12 @@ class UukanshuNovelTrawler(BaseNovelTrawler):
 
         book_content = {}
         for chapter_num in range(start, end + 1):
-            print(f"retrieving content for chapter {chapter_num}..")
+            logger.info(f"retrieving content for chapter {chapter_num}..")
             title, content = self.get_chapter(
                 book_id=book_id, chapter_num=str(chapter_num)
             )
             book_content[title] = content
-            print(f"retrieved content for title: {title}")
+            logger.info(f"retrieved content for title: {title}")
 
         return book_content
 
@@ -90,7 +93,6 @@ class UukanshuNovelTrawler(BaseNovelTrawler):
         chapter_title = f"{chapter_num}_{chinese_title}"
 
         content_url = f"{self.NOVEL_URL}{chapter_subpath}"
-        # print(content_url)
         html = self._get_content(content_url)
         soup = BeautifulSoup(html, "html.parser")
         text_content = (
@@ -114,48 +116,48 @@ class UukanshuNovelTrawler(BaseNovelTrawler):
             if chapter_num == "4903":
                 if len(title) == 2:
                     chapter_num = "4904"
-                    print(chapter_num, title)
+                    logger.info(chapter_num, title)
             elif chapter_num == "6060":
                 if len(title) == 4:
                     chapter_num = "5060"
-                    print(chapter_num, title)
+                    logger.info(chapter_num, title)
             elif chapter_num == "6062":
                 if len(title) == 3:
                     chapter_num = "5062"
-                    print(chapter_num, title)
+                    logger.info(chapter_num, title)
             elif chapter_num == "6067":
                 if len(title) == 4:
                     chapter_num = "5067"
-                    print(chapter_num, title)
+                    logger.info(chapter_num, title)
             elif chapter_num == "437" and len(chinese_number) == 7:
                 if len(title) == 4:
                     chapter_num = "5437"
-                    print(chapter_num, title)
+                    logger.info(chapter_num, title)
             elif chapter_num == "5114":
                 if chapter_subpath.split(".")[0].split("/")[-1] == "12309969":
                     chapter_num = "5113"
-                    print(chapter_num, title)
+                    logger.info(chapter_num, title)
             elif chapter_subpath.split(".")[0].split("/")[-1] == "12332869":
                 chapter_num = "5135"
-                print(chapter_num, title)
+                logger.info(chapter_num, title)
             elif chapter_subpath.split(".")[0].split("/")[-1] == "12394674":
                 chapter_num = "5237"
-                print(chapter_num, title)
+                logger.info(chapter_num, title)
             elif chapter_subpath.split(".")[0].split("/")[-1] == "12424386":
                 chapter_num = "5278"
-                print(chapter_num, title)
+                logger.info(chapter_num, title)
             elif chapter_subpath.split(".")[0].split("/")[-1] == "12441014":
                 chapter_num = "5310"
-                print(chapter_num, title)
+                logger.info(chapter_num, title)
             elif chapter_subpath.split(".")[0].split("/")[-1] == "12472439":
                 chapter_num = "5365"
-                print(chapter_num, title)
+                logger.info(chapter_num, title)
             elif chapter_subpath.split(".")[0].split("/")[-1] == "12491082":
                 chapter_num = "5403"
-                print(chapter_num, title)
+                logger.info(chapter_num, title)
             elif chapter_subpath.split(".")[0].split("/")[-1] == "12549943":
                 chapter_num = "5461"
-                print(chapter_num, title)
+                logger.info(chapter_num, title)
 
         return chapter_num
 
@@ -222,7 +224,7 @@ class NovelFullTrawler(BaseNovelTrawler):
             chapters = self.get_partial_chapters(html)
             full_chapter_list = full_chapter_list + chapters
             next_page_url = self.get_next_page_url(html)
-            print(
+            logger.info(
                 f"next page found, url: {next_page_url}, chapters found: {len(full_chapter_list)}"
             )
             if next_page_url is None:
