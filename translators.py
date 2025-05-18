@@ -1,8 +1,11 @@
 from typing import Tuple
-
+import logging
 from base import BaseTranslator
 from browsers.chatgpt_selenium import Handler
 from browsers.novelhi_selenium import NovelHiHandler
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 
 class ChatGPTTranslator(BaseTranslator):
@@ -22,8 +25,8 @@ class ChatGPTTranslator(BaseTranslator):
         self.openai_handler = Handler(username, password)
         # Initialize the ChatGPT session with the prompt
         answer = self.openai_handler.interact(chat_prompt)
-        print(answer)
-        print("ChatGPT translator initialized")
+        logger.info(answer)
+        logger.info("ChatGPT translator initialized")
 
     def translate_text(self, text: str) -> str:
         """
