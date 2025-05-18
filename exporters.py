@@ -2,14 +2,16 @@ import re
 import json
 import traceback
 import logging
-from typing import Dict, List
+from typing import Dict
 from ebooklib import epub
 from base import BaseExporter
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# TODO: to be deprecated
 class EpubExporter(BaseExporter):
+    """This v1 version is deprecated and will be removed in the future."""
     def __init__(self, book_id: str) -> None:
         self.book_id = book_id
         self.book_title = self._format_title()
