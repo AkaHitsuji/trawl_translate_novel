@@ -3,7 +3,11 @@ Utility functions for the trawl-translate-novel project.
 """
 import os
 import re
+import logging
 from typing import Dict, List, Optional
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 def split_content(content: str, num_chunks: int = 3) -> List[str]:
     """
@@ -82,7 +86,7 @@ def load_translated_titles(filepath: str) -> Dict[str, str]:
                     details = line.split("_", 1)
                     translated_titles[details[0]] = line.strip()
     except IOError as e:
-        print(f"Error loading translated titles from {filepath}: {str(e)}")
+        logger.error(f"Error loading translated titles from {filepath}: {str(e)}")
     
     return translated_titles
 
