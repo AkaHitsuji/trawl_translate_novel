@@ -2,6 +2,7 @@ import re
 import json
 import traceback
 import logging
+import os
 from typing import Dict
 from ebooklib import epub
 from base import BaseExporter
@@ -191,6 +192,17 @@ class EpubExporter(BaseExporter):
                 print(f"Writing EPUB to file: {output_file}")
                 epub.write_epub(output_file, book, {})
                 print(f"Successfully saved epub for {self.book_id}")
+                
+                # Log file path and size information
+                file_path = os.path.abspath(output_file)
+                file_size = os.path.getsize(file_path)
+                file_size_kb = file_size / 1024
+                file_size_mb = file_size_kb / 1024
+                
+                logger.info(f"EPUB file details:")
+                logger.info(f"  - Path: {file_path}")
+                logger.info(f"  - Size: {file_size} bytes ({file_size_kb:.2f} KB, {file_size_mb:.2f} MB)")
+                
             except Exception as e:
                 logger.error(f"Error writing EPUB file: {str(e)}")
                 logger.debug(traceback.format_exc())

@@ -266,6 +266,17 @@ class EpubExporterV2(BaseExporter):
             )
             
             logger.info(f"Successfully exported EPUB to {output_file}")
+            
+            # Log file path and size information
+            file_path = os.path.abspath(output_file)
+            file_size = os.path.getsize(file_path)
+            file_size_kb = file_size / 1024
+            file_size_mb = file_size / 1024 / 1024
+            
+            logger.info(f"EPUB file details:")
+            logger.info(f"  - Path: {file_path}")
+            logger.info(f"  - Size: {file_size} bytes ({file_size_kb:.2f} KB, {file_size_mb:.2f} MB)")
+            
             return True
             
         except Exception as e:
