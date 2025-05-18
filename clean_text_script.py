@@ -1,4 +1,8 @@
 import os
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 def replace_and_clean_lines(folder_path, target_string, limit=200):
     matches = []
@@ -22,17 +26,17 @@ def replace_and_clean_lines(folder_path, target_string, limit=200):
 
     # Step 2: Show matches
     if not matches:
-        print(f"No occurrences of '{target_string}' found.")
+        logger.info(f"No occurrences of '{target_string}' found.")
         return
 
-    print(f"\nFound the first {len(matches)} occurrences of '{target_string}':\n")
+    logger.info(f"\nFound the first {len(matches)} occurrences of '{target_string}':\n")
     for filename, lineno, line in matches:
-        print(f"{filename} (Line {lineno + 1}): {line.strip()}")
+        logger.info(f"{filename} (Line {lineno + 1}): {line.strip()}")
 
     # Step 3: Ask for confirmation
     confirm = input(f"\nDo you want to replace and delete lines that become empty? (yes/no): ").strip().lower()
     if confirm != 'yes':
-        print("Aborted.")
+        logger.info("Aborted.")
         return
 
     # Step 4: Replace + remove lines that become empty
@@ -53,7 +57,7 @@ def replace_and_clean_lines(folder_path, target_string, limit=200):
         with open(file_path, 'w', encoding='utf-8') as f:
             f.writelines(updated_lines)
 
-    print(f"\nProcessed {len(matches)} matches: replaced and removed any lines left empty.")
+    logger.info(f"\nProcessed {len(matches)} matches: replaced and removed any lines left empty.")
 
 # Example usage
 if __name__ == "__main__":
