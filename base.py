@@ -1,9 +1,12 @@
 import json
 import os
+import logging
 from abc import ABC, abstractmethod
 import re
 from typing import Dict, List, Optional, Tuple
 
+# Configure logging
+logger = logging.getLogger(__name__)
 
 class BaseExporter(ABC):
     pass
@@ -93,9 +96,9 @@ class TextReaderWriter:
         try:
             with open(filepath, "w", encoding="utf-8") as file:
                 file.write(content)
-            print(f"Saved {chapter_title}")
+            logger.info(f"Saved {chapter_title}")
         except IOError as e:
-            print(f"Error saving chapter {chapter_title}: {str(e)}")
+            logger.error(f"Error saving chapter {chapter_title}: {str(e)}")
 
     def save_book_cover(
         self,
@@ -123,10 +126,10 @@ class TextReaderWriter:
         try:
             with open(filepath, "wb") as file:
                 file.write(image_bytes)
-            print("Saved cover image")
+            logger.info("Saved cover image")
             return True
         except IOError as e:
-            print(f"Error saving cover image: {str(e)}")
+            logger.error(f"Error saving cover image: {str(e)}")
             return False
 
     def save_book_info(
@@ -155,10 +158,10 @@ class TextReaderWriter:
         try:
             with open(filepath, "w", encoding="utf-8") as file:
                 json.dump(book_info, file, ensure_ascii=False, indent=2)
-            print("Saved book info")
+            logger.info("Saved book info")
             return True
         except IOError as e:
-            print(f"Error saving book info: {str(e)}")
+            logger.error(f"Error saving book info: {str(e)}")
             return False
 
     def get_book_titles(self, order_key: Optional[str] = None) -> List[str]:
@@ -177,7 +180,7 @@ class TextReaderWriter:
         try:
             chapter_titles = os.listdir(folderpath)
         except FileNotFoundError:
-            print(f"Book directory not found: {folderpath}")
+            logger.error(f"Book directory not found: {folderpath}")
             return []
 
         # Remove non-chapter files
@@ -222,7 +225,7 @@ class TextReaderWriter:
             chapter_title = chapter_path.split(".")[0]
             return chapter_title, content
         except IOError as e:
-            print(f"Error reading chapter {chapter_path}: {str(e)}")
+            logger.error(f"Error reading chapter {chapter_path}: {str(e)}")
             return chapter_path.split(".")[0], ""
 
     def get_info_and_cover(
@@ -248,9 +251,9 @@ class TextReaderWriter:
             with open(cover_image_path, "rb") as f:
                 cover_image_content = f.read()
         except FileNotFoundError:
-            print(f"Cover image not found at {cover_image_path}")
+            logger.error(f"Cover image not found at {cover_image_path}")
         except IOError as e:
-            print(f"Error reading cover image: {str(e)}")
+            logger.error(f"Error reading cover image: {str(e)}")
         
         # Get book info
         book_info = {}
@@ -259,11 +262,11 @@ class TextReaderWriter:
             with open(book_info_path, "r", encoding="utf-8") as f:
                 book_info = json.load(f)
         except FileNotFoundError:
-            print(f"Book info not found at {book_info_path}")
+            logger.error(f"Book info not found at {book_info_path}")
         except json.JSONDecodeError:
-            print(f"Invalid JSON in book info file: {book_info_path}")
+            logger.error(f"Invalid JSON in book info file: {book_info_path}")
         except IOError as e:
-            print(f"Error reading book info: {str(e)}")
+            logger.error(f"Error reading book info: {str(e)}")
 
         return cover_image_content, book_info
 
