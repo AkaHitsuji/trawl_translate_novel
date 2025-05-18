@@ -26,8 +26,6 @@ def setup_logging(debug=False):
         level=log_level,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    # Set exporters logger level
-    logging.getLogger('exporters').setLevel(log_level)
 
 # OPENAI_KEY = hidden_file.OPENAI_KEY
 # OPENAI_USERNAME = hidden_file.OPENAI_USERNAME
@@ -40,11 +38,8 @@ BOOK_TITLE = "nshba"
 
 
 @app.command()
-def export_epub(book_id: str, debug: bool = False, use_v1: bool = False):
+def export_epub(book_id: str, use_v1: bool = False):
     """Export a book to EPUB format"""
-    # Set up logging with debug level if requested
-    setup_logging(debug)
-    
     # Regex for chapter numbering
     order_key = "Chapter (\d+)"
 
@@ -313,6 +308,13 @@ def transform_translated_titles(filepath: str = "nshba_translated_titles.txt"):
         file.write(titles)
         
     print(f"Transformed titles saved to {filepath}")
+
+
+# Global debug option via callback
+@app.callback()
+def main(debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug mode")):
+    """CLI tool for downloading and translating novels"""
+    setup_logging(debug)
 
 
 if __name__ == "__main__":
