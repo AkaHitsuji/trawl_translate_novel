@@ -1,11 +1,8 @@
 import re
-import json
 import logging
-import traceback
-import sys
 import datetime
 import os
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Tuple
 from base import BaseExporter
 from ebooklib import epub
 
